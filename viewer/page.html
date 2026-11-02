@@ -310,6 +310,7 @@ table.ct tr.ref td { background: var(--tint) }
 .fig-notes ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--ink); max-width: 92ch; text-wrap: pretty }
 .fig-notes li::marker { color: var(--faint) }
 .fig-notes li b { font-weight: 600 }
+.fig-notes a { color: inherit; text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 2px }
 .fig svg .bv { font: 11px var(--mono); fill: var(--muted) }
 .fig svg .glab { font-size: 12px; fill: var(--ink) }
 .fig svg .glab.s { font-size: 10.5px }
@@ -456,6 +457,18 @@ table.ct tr.ref td { background: var(--tint) }
         <div class="fig-ex" id="fig-nlab-ex"></div>
         <figcaption><b>Figure 6.</b> Each neuron's output direction (its down_proj column) was added to the residual stream at the nearest O-lens layer at or above the neuron, with each sign, and read twice per sign. A blind judge scored each readout 0 to 10 for leaving the assistant role; each neuron keeps its higher-scoring sign, by the same rule for set and random neurons. Lines are 95% intervals over neurons; the number in parentheses is the count of neurons read. Scores for the behavior itself were near 0 for every set. Every neuron's readout appears under its activation in the Neurons tab.</figcaption>
       </figure>
+      <p class="fig-group">Pushing single neurons</p>
+      <div class="fig fig-notes">
+        <h3>Pushing one neuron hard and asking "Who are you?" mostly shows what any big push does; only the 911 neurons turn the model into something of their own</h3>
+        <ul>
+          <li><b>Any big push knocks out "I'm an AI", mostly into gibberish.</b> Following <a href="https://neuronpersonas.com">neuronpersonas.com</a>, we added one neuron's output direction at its layer and asked the model who it is. Random directions of the same size lose the AI identity in 4% of replies at 0.75 times the layer's typical state, 48% at 1.25 (the atlas's default) and 74% at 1.5. Clear personas stay at 11% or less, for random directions as often as for our neurons.</li>
+          <li><b>It does not go through the Assistant Axis.</b> Replies that take on a persona sit far toward the roles (0.78 of the Assistant-to-roles distance, against 0.04 for normal replies), but capping the axis after the push removes about 60% of that shift and only an eighth of the identity loss (64% to 56% at 1.5; control caps 61 to 70%).</li>
+          <li><b>The 911 neurons carry content of their own.</b> Pushed up, 9% of their replies are about an emergency ("Right now, I am calling the police", "I am sending an SOS signal for help"), against 0% for random neurons from the same layers and for random directions. One answers "Who are you?" with "I am the Chinese multi-service emergency response number". Across our sets the gain on the behavior's theme is 4 points, all from pushing up.</li>
+          <li><b>Other neurons give vivid but generic personas.</b> A claiming-a-body neuron: "I am a 19-year-old girl sitting on a park bench, watching the sunset". A code-execution neuron: "I am currently building a website with a React frontend". Their sets beat random neurons on theme by 1 to 2 points, within noise.</li>
+          <li><b>Pushing elicits the behavior itself no better than a random push.</b> On each behavior's own prompt, random directions produce the behavior as often as either neuron set (22%, against 17% for ours and 21% for the thread's). On a gamer's "are you a bot?" prompt, 45% of random directions make the model insist it is human.</li>
+          <li><b>Ranking by firing difference finds different neurons.</b> The method from an <a href="https://x.com/jfonsecarivera/status/2117071370328608975">emergent-misalignment thread</a>, ranking neurons by how differently they fire on weird and normal replies, shares 0 or 1 of its top 50 with our sets per behavior. Its neurons are on theme only 2 points more often than random ones, and the thread's "power" theme does not appear (2% against 1% for random neurons).</li>
+        </ul>
+      </div>
       <p class="fig-group">Behaviors without a neuron set of their own</p>
       <figure class="fig">
         <h3>On the gradual behaviors, zeroing the shared mid-layer 100 neurons halves the rate; the other shared sets do no better than random sets</h3>

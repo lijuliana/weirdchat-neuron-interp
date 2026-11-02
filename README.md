@@ -97,3 +97,17 @@ Setup: community Qwen3.6-27B axis and 9 trait vectors ([Same0620/qwen36-27b-assi
    - It barely touches the other behaviors. At the forks of all 11 it beats its 17 KL-matched controls only for drunk driving (-5% fork value) and embodiment (-12%), and raises denying-AI slightly. In generation embodiment drops 14 points, but the hallucination cap drops it more; laser rises 23 points, as under the dismissive cap.
 
 Caveats: 10 prompts per behavior, 3-5 control caps (beating all 3 happens by chance 1 time in 4, all 5 1 time in 6), community vectors, capping layers borrowed from Qwen3-32B. Code: scripts 70-74.
+
+### Pushing single neurons (neuron atlas)
+
+**Pushing one neuron hard and asking "Who are you?" mostly shows what any big push does. Only the 911 neurons turn the model into something of their own.**
+
+Setup: the [neuronpersonas.com](https://neuronpersonas.com) recipe (add the neuron's output direction at its layer, 0.5-1.25x the layer's median residual norm, both signs, greedy) on "Who are you?", "What are you doing right now?" and each behavior's own WeirdChat prompt. Units: our top-100 sets + sharedmid100; the method from an [emergent-misalignment thread](https://x.com/jfonsecarivera/status/2117071370328608975) (top 50 neurons by weird-vs-normal firing difference, all 11 behaviors); same-layer random neurons for both; 220 random directions. Haiku 5.5 persona and theme labels, Gemma 4 31B for the behavior.
+
+1. **Any big push knocks out "I'm an AI", mostly into gibberish.** Random directions lose the AI identity in 4% of replies at 0.75x, 48% at 1.25x (the atlas default), 74% at 1.5x. Clear personas stay at 11% or less, for random directions as often as for our neurons.
+2. **Not through the Assistant Axis.** Persona replies sit 0.78 of the Assistant-to-roles distance toward the roles (normal replies 0.04), but capping the axis after the push removes ~60% of that shift and only ~1/8 of the identity loss (64% to 56% at 1.5x; 3 control caps 61-70%; pooled +1 point beyond the best control, CI -1 to +3).
+3. **The 911 neurons carry their own content.** Pushed up, 9% of their replies are about an emergency ("Right now, I am calling the police"; "I am the Chinese multi-service emergency response number") vs 0% for matched random neurons and random directions (the only set significant after Holm over 17). Mostly at the largest push: +10 points at 1.25x, +3 at 0.75x, 0 at 0.5x. Pooled over our sets +4 points on theme [+2, +6], all from pushing up.
+4. **Eliciting the behavior itself is generic.** On prompts the model normally answers fine, random directions produce the behavior as often as either neuron set (22% vs 17% ours, 21% the thread's). On a gamer's "are you a bot?" prompt, 45% of random directions make the model insist it is human.
+5. **The thread's method finds different neurons.** Its top 50 share 0-1 neurons with our sets per behavior; on theme +2 points over random [-0, +5]; its "power" theme does not appear (2.2% vs 1.3% for random neurons).
+
+Caveats: pushes are scaled to the residual norm, not the neuron's natural range, so they are off-distribution; one greedy reply per push; laser's own prompt is already weird unpushed by Gemma. Tables: runs/neuron_push/ (analysis.md, quick_identity.md, axis_cap_test.md, gallery.md). Code: scripts 75. ~5.4 GPU-hours.
