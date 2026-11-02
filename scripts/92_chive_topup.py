@@ -38,6 +38,7 @@ def main():
     ap.add_argument("--edits", default=os.path.join(REPO, "data/chive/edits.jsonl"))
     ap.add_argument("--tag", default="t1")
     ap.add_argument("--out-dir", default=os.path.join(REPO, "data/chive/topup"))
+    ap.add_argument("--skip-no-data", action="store_true", help="per-shard specs: leave out edits with no judged replies yet")
     args = ap.parse_args()
 
     edits = list(read_jsonl(args.edits))
@@ -72,7 +73,8 @@ def main():
         k1, n1 = kn(tab.get((pid, eid), {}))
         if n0 == 0 or n1 == 0:
             why["no_data"] += 1
-            sel.append(eid)
+            if not args.skip_no_data:
+                sel.append(eid)
             continue
         eff = abs(k1 / n1 - k0 / n0) * 100
         effects.append(eff)

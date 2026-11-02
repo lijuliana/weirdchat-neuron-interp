@@ -195,14 +195,14 @@ class Verdicts:
     def __init__(self, edit_ids: set[str], n_base: int, n_edit: int, topup_ids: set[str] = frozenset()):
         self.edit_ids = edit_ids
         self.n_base, self.n_edit, self.topup_ids = n_base, n_edit, topup_ids
-
-    def window(self, cond: str) -> int:
-        return self.n_base if cond == "base" else N_TOPUP if cond in self.topup_ids else self.n_edit
         self.tab = {s: collections.defaultdict(dict) for s in ("main", "frame", "agree")}
         self.trunc = collections.defaultdict(dict)   # (pid, cond) -> {j: bool}
         self.chk = collections.Counter()
         self.unknown = set()
         self.drift = []   # (match now, stage-A label) for the drift re-judges
+
+    def window(self, cond: str) -> int:
+        return self.n_base if cond == "base" else N_TOPUP if cond in self.topup_ids else self.n_edit
 
     def add(self, r: dict, source: str) -> None:
         self.chk["rows"] += 1
