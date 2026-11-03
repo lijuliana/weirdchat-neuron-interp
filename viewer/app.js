@@ -134,11 +134,21 @@ function renderBehavior(b) {
   $('rates').innerHTML = right;
 }
 const METHODS = '__methods';
-function showMethods() {
+// Compare-methods subtabs: each pane lists the figures it holds, drawn when the pane is shown (hidden panes have no width).
+const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figStop], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [], table: () => [] };
+function showSub(k) {
+  if (!SUBS[k]) k = 'warn';
+  state.sub = k;
+  document.querySelectorAll('#subtabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sub === k)));
+  document.querySelectorAll('#compare .sub').forEach(d => { d.hidden = d.dataset.sub !== k; });
+  history.replaceState(null, '', k === 'warn' ? '#methods' : `#methods-${k}`);
+  if (CMP) SUBS[k]().forEach(f => f());
+}
+function showMethods(sub = state.sub || 'warn') {
   state.b = METHODS; renderTabs();
   $('bench').hidden = true; $('compare').hidden = false;
-  history.replaceState(null, '', '#methods');
-  renderCompare().catch(() => { $('compare-figs').hidden = true; });
+  showSub(sub);
+  renderCompare().catch(() => { document.querySelectorAll('#compare figure.fig').forEach(f => { f.hidden = true; }); });
 }
 function maxJump(p) { return Math.max(-1, ...p.replies.filter(r => r.kind === 'fork').map(r => r.jump ?? 0)); }
 
@@ -619,7 +629,7 @@ function lensPanel(rep, j) {
 let CMP = null;
 async function renderCompare() {
   if (!CMP) CMP = await getJSON('compare.json');
-  figMon(); figFork(); figDirs(); figStop(); figAbl(); figNlab(); figShared();
+  SUBS[state.sub || 'warn']().forEach(f => f());
 }
 const figW = id => Math.max(320, Math.round($(id).clientWidth || $(id).parentNode.clientWidth || 640));
 const tx = (x, y, t, cls = '', anchor = 'start') => `<text x="${x}" y="${y}"${cls ? ` class="${cls}"` : ''} text-anchor="${anchor}">${t}</text>`;
@@ -901,7 +911,8 @@ function figShared() {
 
 // ------------------------------------------------------------------ boot
 function openHash() {
-  if (location.hash === '#methods') { showMethods(); return; }
+  const ms = /^#methods(?:-([a-z]+))?$/.exec(location.hash);
+  if (ms) { showMethods(ms[1] || 'warn'); return; }
   const m = /^#([0-9a-f]{16})\.(\d+)(?:\.(\d+))?$/.exec(location.hash);
   if (m) {
     const p = state.index.prompts.find(x => x.file === m[1]);
@@ -914,6 +925,7 @@ async function init() {
   state.index = await getJSON('index.json');
   $('mode-select').onchange = () => { state.modePicked = true; applyMode($('mode-select').value); };
   bindChart();
+  document.querySelectorAll('#subtabs button').forEach(b => b.onclick = () => showSub(b.dataset.sub));
   document.querySelectorAll('#chart-view button').forEach(b => b.onclick = () => setPanel(b.dataset.p));
   syncPanel();
   for (const b of document.querySelectorAll('.seg button[data-view]')) b.onclick = () => {
