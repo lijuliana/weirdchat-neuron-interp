@@ -428,7 +428,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
       <button type="button" data-sub="stop" aria-selected="false">Stopping the behavior</button>
       <button type="button" data-sub="olens" aria-selected="false">Reading the neurons</button>
       <button type="button" data-sub="shared" aria-selected="false">Behaviors without a set</button>
-      <button type="button" data-sub="edits" aria-selected="false">Which prompt edits matter</button>
+      <button type="button" data-sub="edits" aria-selected="false">CHIVE analysis</button>
       <button type="button" data-sub="table" aria-selected="false">All methods</button>
     </nav>
     <div class="figs sub" id="compare-figs" data-sub="warn">
@@ -611,7 +611,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <td>0.5 H100-hours; ~17M Haiku tokens for labels and scoring. Explains 59% of the variance of our states vs 70% on web text.</td></tr>
       </tbody>
     </table></div>
-    <p class="ct-note">The prompt-edit column is the CHIVE-style test in “Which prompt edits matter”. Neuron rows come from the fork-and-ablate pipeline (Phase 2); the O-lens, Assistant Axis, persona and direction rows are our runs on the same prompts.</p>
+    <p class="ct-note">The prompt-edit column comes from the CHIVE analysis subtab. Neuron rows come from the fork-and-ablate pipeline (Phase 2); the O-lens, Assistant Axis, persona and direction rows are our runs on the same prompts.</p>
     </div>
   </section>
   <details class="method" id="method">
