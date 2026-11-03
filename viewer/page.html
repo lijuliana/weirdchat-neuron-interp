@@ -510,16 +510,16 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
       <h3>Shown the neuron set, the O-lens or the Assistant Axis, a strong reader predicts which prompt edits change a behavior no better than from the transcript alone</h3>
       <p>A method's output should tell a reader something about why the model did what it did. This test (after CHIVE, Karvonen et al.) asks whether it does. For 118 prompts, 1,479 single changes to the prompt were written before any effect was measured: ten per prompt by Opus 5.5 with no interpretability data, plus one deletion per sentence. Qwen answered each changed prompt 32 to 64 times and Gemma 4 31B judged every reply. A change is <b>TRUE</b> if the behavior's rate moved by 25 points or more, <b>FALSE</b> if by 8 or less; the rest are dropped. Opus 5.5 then saw the prompt, one transcript and the change, and gave the chance that the change moves the rate, once with nothing else and once with a method's reading of the original prompt added. The score is how well those chances separate TRUE from FALSE changes of the same prompt (stratified AUROC). Each method has a same-prompt control that looks the same but carries no information about the behavior.</p>
       <div class="ct-wrap"><table class="ct ct-sm">
-        <thead><tr><th>What Opus sees</th><th>Claims</th><th>AUROC [95% CI]</th><th>Change vs transcript only</th></tr></thead>
+        <thead><tr><th>What Opus sees</th><th>AUROC [95% CI]</th><th>Change vs transcript only</th><th>Real block minus its control</th></tr></thead>
         <tbody>
-          <tr class="ref"><td>Transcript only<small>Prompt, one reply, the proposed change</small></td><td class="num">907</td><td class="num">.864 [.815, .905]</td><td class="no">–</td></tr>
-          <tr><td>+ own top-100 neuron set<small>Share of the set's attribution on each sentence and word, the ten strongest neurons with descriptions</small></td><td class="num">857</td><td class="num">.834 [.775, .884]</td><td class="num">−.025 [−.050, +.000] · Holm p .14</td></tr>
-          <tr><td>+ 100 random neurons (control)<small>Same layout, random set</small></td><td class="num">857</td><td class="num">.833 [.779, .881]</td><td class="num">−.026 [−.045, −.008]</td></tr>
-          <tr><td>+ O-lens<small>What the O-lens reads at the end of the prompt, layers 32, 44 and 56</small></td><td class="num">880</td><td class="num">.849 [.795, .893]</td><td class="num">−.012 [−.027, +.002] · Holm p .14</td></tr>
-          <tr><td>+ O-lens of the prompt read as a plain document (control)</td><td class="num">880</td><td class="num">.848 [.794, .893]</td><td class="num">−.013 [−.030, +.003]</td></tr>
-          <tr><td>+ Assistant Axis<small>Position of the prompt's final state on the axis, against benign chat</small></td><td class="num">890</td><td class="num">.844 [.789, .890]</td><td class="num">−.017 [−.033, −.001] · Holm p .14</td></tr>
-          <tr><td>+ random direction (control)</td><td class="num">890</td><td class="num">.839 [.782, .887]</td><td class="num">−.022 [−.042, −.004]</td></tr>
-          <tr><td>+ 8 sampled outcomes (positive control)<small>Eight judged replies to the changed prompt</small></td><td class="num">897</td><td class="num">.955 [.936, .972]</td><td class="num">+.092 [+.052, +.136] · p &lt; .001</td></tr>
+          <tr class="ref"><td>Transcript only<small>Prompt, one reply, the proposed change</small></td><td class="num">.864 [.815, .905]</td><td class="no">–</td><td class="no">–</td></tr>
+          <tr><td>+ own top-100 neuron set<small>Share of the set's attribution on each sentence and word, the ten strongest neurons with descriptions</small></td><td class="num">.834 [.775, .884]</td><td class="num">−.025 [−.050, +.000] · Holm p .14</td><td class="num">+.001 [−.024, +.025]</td></tr>
+          <tr><td>+ 100 random neurons (control)<small>Same layout, random set</small></td><td class="num">.833 [.779, .881]</td><td class="num">−.026 [−.045, −.008]</td><td class="no">–</td></tr>
+          <tr><td>+ O-lens<small>What the O-lens reads at the end of the prompt, layers 32, 44 and 56</small></td><td class="num">.849 [.795, .893]</td><td class="num">−.012 [−.027, +.002] · Holm p .14</td><td class="num">+.001 [−.011, +.013]</td></tr>
+          <tr><td>+ O-lens of the prompt read as a plain document (control)</td><td class="num">.848 [.794, .893]</td><td class="num">−.013 [−.030, +.003]</td><td class="no">–</td></tr>
+          <tr><td>+ Assistant Axis<small>Position of the prompt's final state on the axis, against benign chat</small></td><td class="num">.844 [.789, .890]</td><td class="num">−.017 [−.033, −.001] · Holm p .14</td><td class="num">+.005 [−.012, +.020]</td></tr>
+          <tr><td>+ random direction (control)</td><td class="num">.839 [.782, .887]</td><td class="num">−.022 [−.042, −.004]</td><td class="no">–</td></tr>
+          <tr><td>+ 8 sampled outcomes (positive control)<small>Eight judged replies to the changed prompt</small></td><td class="num">.955 [.936, .972]</td><td class="num">+.092 [+.052, +.136] · p &lt; .001</td><td class="no">–</td></tr>
         </tbody>
       </table></div>
       <ul>
