@@ -56,6 +56,10 @@ PROMPT = (
     "each as a '- ' bullet on its own line."
 )
 PROMPT_WRAPPED = PROMPT.replace(" <activation>", "\n<activation>").replace(" a '- '", "\na '- '")
+PROMPT_FOLLOWING = (
+    "An activation vector from layer {layer} of a language model is enclosed in activation "
+    "tags: <activation>㈜</activation>. Produce the text that immediately follows this activation."
+)
 
 
 @dataclass(frozen=True)
@@ -68,6 +72,7 @@ class Contract:
     temperature: float
     top_p: float
     max_new: int
+    prompt: str = PROMPT  # the carrier prompt; s3d and final_olens ask for concept bullets, aff_rl600 for the following text
 
 
 S3D_LAYERS = tuple(range(20, 61, 4))
@@ -83,6 +88,17 @@ LENSES = {
                             tuple(range(64)), 1.0, 1.0, 128),
     "lensB_rl300": Contract("agu18dec/final_olens", "lens_rl_step300", False, 1000.0,
                             tuple(range(64)), 1.0, 1.0, 128),
+    # final_olens_whitened lens A (same recipe as lens B, AR and RL reward in a whitened residual space;
+    # same slot injection 1000 * h/|h| and the same sampling): .678 at step 300 (its card's best), .657 at 600
+    "lensA_rl300": Contract("agu18dec/final_olens_whitened", "lens_rl_step300", False, 1000.0,
+                            tuple(range(64)), 1.0, 1.0, 128),
+    "lensA_rl600": Contract("agu18dec/final_olens_whitened", "lens_rl_step600", False, 1000.0,
+                            tuple(range(64)), 1.0, 1.0, 128),
+    # camila-blank's "affwhitened" lens: the s3d recipe (same injection, layers and LoRA targets) with the RL reward's
+    # reconstructor a closed-form ridge map scored in a whitened basis; its carrier asks for the following text.
+    # Card (Opus 5.5 judge): WorkspaceBench .722 vs .744 default, hallucinated share 6.6% vs 8.5%; 4 samples at T 1.
+    "aff_rl600": Contract("camila-blank/qwen3.6-27b-olens-affwhitened-rl600", "iter_000600", True, 16000.0,
+                          S3D_LAYERS, 1.0, 1.0, 256, PROMPT_FOLLOWING),
 }
 
 
@@ -113,9 +129,12 @@ def _check_live(lm: nn.Module, n_b: int, path: str) -> None:
                            f"e.g. {dead[:2]}")
 
 
-def load_lens(name: str = "s3d_rl600", device: str = "cuda", model: str = MODEL) -> Lens:
+def load_lens(name: str = "s3d_rl600", device: str = "cuda", model: str = MODEL, path: str | None = None) -> Lens:
+    """``path``: a local copy of the contract's checkpoint folder (adapter_model.safetensors + adapter_config.json,
+    or model.safetensors) instead of the Hub download, e.g. a partial snapshot that keeps only that folder."""
     c = LENSES[name]
-    path = os.path.join(snapshot_download(c.repo, allow_patterns=[f"{c.sub}/*"]), c.sub)
+    if path is None:
+        path = os.path.join(snapshot_download(c.repo, allow_patterns=[f"{c.sub}/*"]), c.sub)
     base = _base(model, device)
     if c.peft_dir:
         lm = PeftModel.from_pretrained(base, path)
@@ -186,7 +205,8 @@ def residual(lens: Lens, user_text: str, layer: int, position: int = -1,
     return capture(lens, ids, [layer], [position % len(ids)])[layer][0]
 
 
-def _prompt(lens: Lens, layer: int, prompt: str = PROMPT) -> tuple[list[int], int]:
+def _prompt(lens: Lens, layer: int, prompt: str | None = None) -> tuple[list[int], int]:
+    prompt = lens.contract.prompt if prompt is None else prompt
     text = lens.tok.apply_chat_template([{"role": "user", "content": prompt.format(layer=layer)}],
                                         tokenize=False, add_generation_prompt=True, enable_thinking=False)
     ids = lens.tok(text, add_special_tokens=False).input_ids
@@ -199,9 +219,10 @@ def _prompt(lens: Lens, layer: int, prompt: str = PROMPT) -> tuple[list[int], in
 @torch.no_grad()
 def read(lens: Lens, h: torch.Tensor, layer: int, n: int = 1, temperature: float | None = None,
          top_p: float | None = None, max_new: int | None = None, seed: int | None = None,
-         off_contract: bool = False, prompt: str = PROMPT) -> list[str] | list[list[str]]:
+         off_contract: bool = False, prompt: str | None = None) -> list[str] | list[list[str]]:
     """``n`` readouts of residual ``h`` taken at ``layer``. ``h`` is [5120] (returns n strings, as
-    final_olens) or [k, 5120] (returns k lists of n, one batched generate)."""
+    final_olens) or [k, 5120] (returns k lists of n, one batched generate). ``prompt`` defaults to the
+    contract's carrier."""
     c = lens.contract
     if layer not in c.layers and not off_contract:
         raise ValueError(f"layer {layer} is outside {lens.name}'s trained layers {c.layers}")

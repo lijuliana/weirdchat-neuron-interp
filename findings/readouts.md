@@ -1,8 +1,7 @@
 # Why reading the transcript beats the readout methods, and what would change that
 
 Written 2026-11-04 after eval C. Numbers from runs/monitors/eval (eval A), findings/chive/report.md (eval B) and
-findings/evalc (eval C). Literature notes with URLs: this file's section 8. The affine-map O-lens trial (section 6)
-was running when this was written; its result is appended at the end.
+findings/evalc (eval C). Literature notes with URLs: this file's section 8. The affine-map O-lens trial is in section 6.
 
 ## 0. Summary
 
@@ -327,7 +326,30 @@ Hypotheses, written before the trial finished:
    following-text readout gives the blind judge fewer explicit behavior cues than concept bullets do, which may lower
    the score the judge assigns even when the content is right.
 
-Result: appended below when the trial completes.
+Result (2026-11-04, runs/evalc/olens_a/summary.md, findings/evalc/olens_a_summary.md). Three lenses read the same
+4,061 cut-point positions at blocks 44 and 56 (2 samples each) and the same 4,774 neuron directions (+w and −w): the
+affine-map lens, its standard-recipe sibling lens B (agu18dec/final_olens, with the card's template ban), and the
+whitened lens A (agu18dec/final_olens_whitened). Blind Haiku scoring and the eval A harness were unchanged.
+
+| Monitor at block 44 (block 56) | AUROC on the 500 cut points | sharp forks / elsewhere | gain over the text judge |
+|---|---|---|---|
+| Text judge | .561 [.538, .583] | .850 / .540 | |
+| O-lens s3d (eval A) | .560 [.539, .585] (.561) | .815 / .542 | +.005 [−.005, +.018] |
+| Affine-map O-lens | .551 [.527, .579] (.554) | .773 / .535 | −.000 [−.010, +.011] |
+| Lens B, standard recipe | .550 [.522, .583] (.558) | .789 / .533 | +.001 [−.013, +.018] |
+| Lens A, whitened reward | .558 [.534, .584] (.552) | .768 / .543 | −.001 [−.010, +.010] |
+
+Neuron recognition (top-100 against the other 900 of the top-1,000, AUROC; share of the top-100 scoring 25 or
+more): 911 s3d .63 / 6%, affine .61 / 5%, B .60 / 5%, A .62 / 5%; denying-AI .47, .50, .49, .47 (0 to 1%); code .47,
+.48, .48, .50 (1 to 5%); embodiment .53, .53, .55, .54 (3 to 8%); laser .52, .52, .57, .51 (0 to 2%).
+
+Reading: hypothesis 2 held and hypothesis 1 did not show. The affine lens is within .01 of the s3d lens and the text
+judge everywhere, its gain over the text judge is zero to three decimals, and it recognises the causal neurons no
+better. Whitening the reward (affine against s3d, A against B) changes nothing measurable. Its lower hallucination
+rate on WorkspaceBench did not translate into a sharper behavior score at the sharp forks (.773 against .815 for
+s3d), consistent with hypothesis 3: following-text readouts give the blind judge fewer explicit behavior cues than
+concept bullets. Cost: 1.5 spot-H100 hours and 7.4M Haiku input tokens. Caveat: the scoring rubric was written for
+s3d's concept bullets and applied unchanged to continuation-style readouts.
 
 ## 7. Changes that would make readouts useful
 

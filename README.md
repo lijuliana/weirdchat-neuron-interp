@@ -111,6 +111,10 @@ description of a component is not a description of a state.** Full analysis with
    0 to 10. It measures what an intervention changed and cannot say which intervention to make. SAE labels and J-lens keywords fail the same way.
 5. **The verbalizer answers from its own knowledge** (Li et al.): the O-lens of the prompt read as a plain document
    helps Opus predict edits exactly as much as the O-lens of the chat state.
+6b. **A new O-lens with a ridge reconstructor and a whitened reward does not change this.** The affine-map lens
+   (camila-blank, iter 600) scores .551 at block 44 on the 500 cut points against .560 for the s3d lens and .561 for
+   the text judge, with zero gain over the text judge, and recognises the causal neurons no better (AUROC .47 to .61).
+   Its unwhitened sibling and the whitened lens A land in the same place. 1.5 GPU-hours; findings/evalc/olens_a_summary.md.
 6. **Confabulation and web-text training are present but secondary.** The O-lens was trained on this model's chat replies
    and confabulates less than the NLA; it still gains nothing.
 
