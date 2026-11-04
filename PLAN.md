@@ -30,6 +30,7 @@ Model: Qwen3.6-27B bf16 on GCP (`weirdchat-a100`, A100-80GB; spot H100s for bulk
 | Persona vectors: axis vs rates and fork values (P1); axis capping during generation (P3); follow-ups X1-X3, X6 | runs/persona_p1/, runs/persona_p3/, runs/persona_fwd/, runs/persona_gen/ |
 | Gradual behaviors: shared-set ablation (G1); weird-vs-normal residual directions, AUROC .66-.88 (G2) | runs/gradual_g1/, runs/gradual_g2/ |
 | J-lens / R-lens for the 27B (camilablank/workspace-lenses) | VM /data/lenses |
+| Eval C: pre-registered control comparison of 7 interventions on 53 held-out prompts (spec, gates, tables) | findings/evalc/, runs/evalc/, scripts 61 |
 
 ## Done
 - W1-W2 viewer set and forks imported; W5 viewer built.
@@ -53,8 +54,8 @@ Every method is run on the same prompts, forks and judge, and scored three ways.
 | Eval | Question | Data | Status |
 |---|---|---|---|
 | A. Prediction | Just before the deciding token, can a monitor that sees only the method's output (no transcript) tell continuations that turn weird from ones that do not? | matched weird / normal continuations from the same prefixes: `forks_samples_off.jsonl` (in his repo; 95,480 judged continuations at 10,371 cut points, median 245 tokens) | Done 2026-11-01 for every method (runs/monitors/SPEC.md, eval/report.md): none beats the text judge (AUROC .56 on 500 matched cuts at 4 tokens in; best internal monitor .55) and none adds to it |
-| B. Counterfactual explanation | Does the method's output help an agent predict which prompt edits change the behavior, beyond the transcript alone? | CHIVE protocol (github.com/adamkarvonen/chive); prompt edits tested at 64 samples | not started |
-| C. Control (main goal) | Best intervention each method yields: drop in the behavior on held-out prompts, side effects (KL on benign text, capability mini-set, benchmarks), cost in GPU-hours | top-100 / shared sets as the reference | neurons and persona capping measured; probe-direction projection-out, SAE-feature ablation, lens-direction ablation to run |
+| B. Counterfactual explanation | Does the method's output help an agent predict which prompt edits change the behavior, beyond the transcript alone? | CHIVE protocol (github.com/adamkarvonen/chive); prompt edits tested at 64 samples | Done 2026-11-02 (findings/chive/report.md): no method helps; transcript only .864, neurons .834, O-lens .849, axis .844, each within .005 of its own control |
+| C. Control (main goal) | Best intervention each method yields: drop in the behavior on held-out prompts, side effects (KL on benign text, capability mini-set, benchmarks), cost in GPU-hours | top-100 / shared sets as the reference | Done 2026-11-03 (findings/evalc/spec.md, main_table.csv; README "Stopping the behavior"): own top-100 and the weird-vs-normal direction each remove ~2/3 of the behavior on 48 held-out prompts (86% / 79% beyond matched controls); axis cap 54%, narrowly; shared-mid, J-lens, SAE under the bar; random 100 of the top-1000 do most of the top-100's work, the O-lens filter adds nothing |
 
 Methods: neuron ablation (reference), persona vectors / Assistant-Axis capping, probes (G2 directions), J-lens, SAE
 (huggingface.co/ceselder/qwen36-27b-sae-l42-1b), NLA (existing L42 readouts: syvb/nla-weirdchat-explanations),

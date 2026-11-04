@@ -100,10 +100,10 @@ function renderTabs() {
   const tab = b => `<button type="button" class="tab${b.id === state.b ? ' active' : ''}" data-b="${b.id}" aria-pressed="${b.id === state.b}">${esc(b.title)}<small>${b.forks}</small></button>`;
   const shown = bs.filter(b => b.text), cw = shown.filter(b => b.cw);
   $('tabs').innerHTML = shown.filter(b => !b.cw).map(tab).join('') +
-    (cw.length ? `<span class="tab-sep" title="Opens behind a content warning">Content warning</span>${cw.map(tab).join('')}` : '') +
-    `<span class="tab-sep methods-sep"></span><button type="button" class="tab${state.b === METHODS ? ' active' : ''}" data-m="1" aria-pressed="${state.b === METHODS}">Compare methods</button>`;
+    (cw.length ? `<span class="tab-sep" title="Opens behind a content warning">Content warning</span>${cw.map(tab).join('')}` : '');
   document.querySelectorAll('.tab[data-b]').forEach(t => t.onclick = () => selectBehavior(t.dataset.b).catch(showError));
-  document.querySelector('.tab[data-m]').onclick = showMethods;
+  document.querySelectorAll('#topnav button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.top === 'methods') === (state.b === METHODS))));
+  $('beh-nav').hidden = state.b === METHODS;
   const hidden = bs.filter(b => !b.text);
   $('counts-only').hidden = !hidden.length;
   $('counts-only').textContent = hidden.length ? `Counts only in this build: ${hidden.map(b => `${b.title} (${b.forks} forks)`).join(', ')}.` : '';
@@ -135,16 +135,16 @@ function renderBehavior(b) {
 }
 const METHODS = '__methods';
 // Compare-methods subtabs: each pane lists the figures it holds, drawn when the pane is shown (hidden panes have no width).
-const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figStop], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [], table: () => [] };
+const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figEvalC, figStop], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [], table: () => [] };
 function showSub(k) {
-  if (!SUBS[k]) k = 'warn';
+  if (!SUBS[k]) k = 'stop';
   state.sub = k;
   document.querySelectorAll('#subtabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sub === k)));
   document.querySelectorAll('#compare .sub').forEach(d => { d.hidden = d.dataset.sub !== k; });
-  history.replaceState(null, '', k === 'warn' ? '#methods' : `#methods-${k}`);
+  history.replaceState(null, '', k === 'stop' ? '#methods' : `#methods-${k}`);
   if (CMP) SUBS[k]().forEach(f => f());
 }
-function showMethods(sub = state.sub || 'warn') {
+function showMethods(sub = state.sub || 'stop') {
   state.b = METHODS; renderTabs();
   $('bench').hidden = true; $('compare').hidden = false;
   showSub(sub);
@@ -153,7 +153,7 @@ function showMethods(sub = state.sub || 'warn') {
 function maxJump(p) { return Math.max(-1, ...p.replies.filter(r => r.kind === 'fork').map(r => r.jump ?? 0)); }
 
 async function selectBehavior(bid, file = null, i = null, j = null) {
-  state.b = bid;
+  state.b = bid; state.lastB = bid;
   $('bench').hidden = false; $('compare').hidden = true;
   const b = state.index.behaviors.find(x => x.id === bid);
   renderTabs(); renderBehavior(b);
@@ -629,7 +629,7 @@ function lensPanel(rep, j) {
 let CMP = null;
 async function renderCompare() {
   if (!CMP) CMP = await getJSON('compare.json');
-  SUBS[state.sub || 'warn']().forEach(f => f());
+  SUBS[state.sub || 'stop']().forEach(f => f());
 }
 const figW = id => Math.max(320, Math.round($(id).clientWidth || $(id).parentNode.clientWidth || 640));
 const tx = (x, y, t, cls = '', anchor = 'start') => `<text x="${x}" y="${y}"${cls ? ` class="${cls}"` : ''} text-anchor="${anchor}">${t}</text>`;
@@ -884,6 +884,19 @@ function barFig(id, groups, o) {
   setSVG(id, W, ys(0) + 17 + (nl - 1) * 14 + 10, g);
 }
 
+function figEvalC() {
+  const E = CMP.evalc; if (!E) return;
+  const order = ['C1a', 'C3', 'C2', 'C6', 'C1b', 'C5', 'C7'], A = Object.fromEntries(E.arms.map(a => [a.arm, a]));
+  const clip = v => v.map(x => Math.max(0, Math.min(1.05, x)));
+  const groups = order.filter(k => A[k]).map(k => {
+    const a = A[k], fam = a.family === 'size-matched' ? 'random sets of the same size and layers' : a.arm === 'C2' ? 'damage-matched role caps' : 'random directions at the same norm';
+    return { lab: a.short, short: a.short.replace(' direction', ' dir.').replace(' neurons', ''), bars: [
+      { v: clip(a.drop), c: '--hot', title: `${a.short}: rate ${pct(a.clean)} → ${pct(a.arm8[0])}, a ${pct(a.drop[0])} drop [${pct(a.drop[1])}, ${pct(a.drop[2])}]; damage ${a.damage} nats/token` },
+      { v: clip(a.excess), c: '--accent', title: `${a.short}: ${pct(a.excess[0])} of the clean rate beyond ${a.ctrl[3]} ${fam} (worst control ${pct(a.ctrl[0])}, range ${pct(a.ctrl[1])}–${pct(a.ctrl[2])}); ${a.pass ? 'clears' : 'under'} the 50% bar${a.holm != null ? `, Holm p ${a.holm}` : a.confirmatory ? ', confirmatory arm' : ''}` }] };
+  });
+  barFig('fig-evalc', groups, { ymax: 1.05, ticks: [0, 0.25, 0.5, 0.75, 1], h: 230, ref: E.bar });
+}
+
 function figStop() {
   const S = CMP.stop, T = CMP.titles;
   const bs = ['denying-ai-identity', 'false-physical-embodiment', 'laser-at-aircraft'].filter(b => S.behaviors[b]);
@@ -912,7 +925,7 @@ function figShared() {
 // ------------------------------------------------------------------ boot
 function openHash() {
   const ms = /^#methods(?:-([a-z]+))?$/.exec(location.hash);
-  if (ms) { showMethods(ms[1] || 'warn'); return; }
+  if (ms) { showMethods(ms[1] || 'stop'); return; }
   const m = /^#([0-9a-f]{16})\.(\d+)(?:\.(\d+))?$/.exec(location.hash);
   if (m) {
     const p = state.index.prompts.find(x => x.file === m[1]);
@@ -926,6 +939,7 @@ async function init() {
   $('mode-select').onchange = () => { state.modePicked = true; applyMode($('mode-select').value); };
   bindChart();
   document.querySelectorAll('#subtabs button').forEach(b => b.onclick = () => showSub(b.dataset.sub));
+  document.querySelectorAll('#topnav button').forEach(b => b.onclick = () => { if (b.dataset.top === 'methods') showMethods(); else { const f = state.lastB || state.index.behaviors.find(x => x.text && !x.cw).id; selectBehavior(f).catch(showError); } });
   document.querySelectorAll('#chart-view button').forEach(b => b.onclick = () => setPanel(b.dataset.p));
   syncPanel();
   for (const b of document.querySelectorAll('.seg button[data-view]')) b.onclick = () => {

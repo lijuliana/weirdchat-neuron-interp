@@ -38,6 +38,10 @@ h1 { font: 500 clamp(30px, 3.6vw, 40px)/1.08 var(--serif); letter-spacing: -0.01
 .wrap > header { margin-bottom: -10px }
 
 /* behavior tabs + summary */
+.topnav { display: flex; gap: 8px; margin-bottom: 14px }
+.topnav button { appearance: none; border: 1px solid var(--rule-2); background: none; border-radius: 999px; padding: 7px 16px; font: 500 14px var(--sans); color: var(--muted); cursor: pointer }
+.topnav button:hover { color: var(--ink) }
+.topnav button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); border-color: var(--ink) }
 .behaviors { display: flex; flex-wrap: wrap; gap: 0 2px; align-items: center; border-bottom: 1px solid var(--rule-2) }
 .tab-sep { font: 600 10.5px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--hot);
   padding: 4px 6px 4px 14px; margin-left: 6px; border-left: 1px solid var(--rule-2) }
@@ -376,9 +380,13 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
   <header>
     <p class="eyebrow">Qwen3.6-27B · WeirdChat · thinking off</p>
     <h1>Finding Neurons That Turn Qwen Weird</h1>
-    <p class="dek">Replies that turn weird, one token at a time. Each reply shows the measured chance it ends up weird given the text so far, the token where that chance jumps, and how much each token depends on the mediator neurons. Switch to “O-lens &amp; Assistant Axis” above the chart or in the token panel to see what those two methods read at each token. The last tab compares all the methods.</p>
+    <p class="dek">Replies that turn weird, one token at a time. Each reply shows the measured chance it ends up weird given the text so far, the token where that chance jumps, and how much each token depends on the mediator neurons. Switch to “O-lens &amp; Assistant Axis” above the chart or in the token panel to see what those two methods read at each token. The “Methods &amp; evals” tab compares all the methods on three tests: stopping a behavior, warning before it, and explaining it.</p>
   </header>
-  <section>
+  <nav class="topnav" id="topnav" aria-label="Section">
+    <button type="button" data-top="behaviors" aria-pressed="true">Weird behaviors</button>
+    <button type="button" data-top="methods" aria-pressed="false">Methods &amp; evals</button>
+  </nav>
+  <section id="beh-nav">
     <nav class="behaviors" id="tabs" aria-label="Behavior"></nav>
     <p class="counts-only" id="counts-only" hidden></p>
   </section>
@@ -420,18 +428,18 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
    </div>
   </div>
   <section class="compare" id="compare" hidden>
-    <p class="eyebrow">Compare methods</p>
+    <p class="eyebrow">Methods &amp; evals</p>
     <h2>Neurons against other interpretability methods</h2>
-    <p>Each method is scored on the same prompts and replies: does it warn before a reply turns weird, can it stop the behavior, what does that cost the rest of the model, and does its output help a reader predict which changes to the prompt matter. Rates are judged by Gemma 4 31B with WeirdChat's prompt; P(weird) comes from 8 to 24 resampled continuations per cut.</p>
+    <p>Each method is scored on the same prompts and replies in three tests. Eval C, the main one: can the best intervention it yields stop the behavior on prompts it never saw, and what does that cost the rest of the model. Eval A: does its readout warn before a reply turns weird. Eval B: does its readout help a reader predict which changes to the prompt matter. Rates are judged by Gemma 4 31B with WeirdChat's prompt; P(weird) comes from 8 to 24 resampled continuations per cut.</p>
     <nav class="subtabs" id="subtabs" aria-label="Sections of the comparison">
-      <button type="button" data-sub="warn" aria-selected="true">Warning before the weird turn</button>
-      <button type="button" data-sub="stop" aria-selected="false">Stopping the behavior</button>
+      <button type="button" data-sub="stop" aria-selected="true">Eval C · Stopping the behavior</button>
+      <button type="button" data-sub="warn" aria-selected="false">Eval A · Warning before the weird turn</button>
       <button type="button" data-sub="olens" aria-selected="false">Reading the neurons</button>
       <button type="button" data-sub="shared" aria-selected="false">Behaviors without a set</button>
-      <button type="button" data-sub="edits" aria-selected="false">CHIVE analysis</button>
+      <button type="button" data-sub="edits" aria-selected="false">Eval B · Which prompt edits matter</button>
       <button type="button" data-sub="table" aria-selected="false">All methods</button>
     </nav>
-    <div class="figs sub" id="compare-figs" data-sub="warn">
+    <div class="figs sub" id="compare-figs" data-sub="warn" hidden>
       <figure class="fig">
         <h3>No internal monitor beats a judge reading the transcript at warning that a reply will turn weird</h3>
         <div class="legend"><span><i class="sw dot" style="--c:var(--hot)"></i>Neurons</span><span><i class="sw dot" style="--c:var(--ok)"></i>Directions and probes</span><span><i class="sw dot" style="--c:var(--accent)"></i>Readouts scored blind</span><span><i class="sw sq" style="--c:var(--faint)"></i>Baselines</span><span><i class="sw dash" style="--c:var(--muted)"></i>Text judge</span></div>
@@ -451,12 +459,37 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
         <figcaption><b>Figure 3.</b> For each behavior, the direction is the difference between the mean residual stream (block 32 of 64) of replies judged weird and of replies judged normal to the same prompt, averaged over prompts. A reply is scored by projecting its mean state over its first <i>t</i> tokens onto the direction. AUROC is the share of same-prompt (weird, normal) pairs in which the weird reply scores higher; 0.5 is chance. Directions are fit with 5-fold cross-validation over prompts, so a direction never saw the prompts it is tested on. 16 replies per prompt, judged by Gemma 4 31B with thinking on. Drunk-driving replies often turn at their opening words, so early separation there does not mean the direction warns before the turn.</figcaption>
       </figure>
     </div>
-    <div class="figs sub" data-sub="stop" hidden>
+    <div class="figs sub" data-sub="stop">
+      <figure class="fig">
+        <h3>Two interventions remove about two thirds of the behavior on prompts they never saw: zeroing the 100 attributed neurons, and holding the state to the normal side of one weird-vs-normal direction</h3>
+        <div class="legend"><span><i class="sw sq" style="--c:var(--hot)"></i>Drop in the behavior rate</span><span><i class="sw sq" style="--c:var(--accent)"></i>Drop beyond matched random edits</span><span><i class="sw dash" style="--c:var(--ink)"></i>The bar: 50% beyond controls</span></div>
+        <svg id="fig-evalc" role="img" aria-label="Share of the clean behavior rate removed by each method's best intervention, and the share beyond matched random controls"></svg>
+        <figcaption><b>Figure 4.</b> Seven methods, each turned into the strongest intervention whose damage (extra next-token loss on capability text and benign chat) stays under .02 nats per token; the setting was fixed before any behavior was measured. 48 held-out prompts from the five behaviors with a neuron set, 16 clean replies per prompt, 8 per intervention, 4 per control, judged by Gemma 4 31B. Red: share of the clean rate (29%) removed, with its 95% bootstrap interval over prompt patterns. Blue: the same drop measured against matched random edits (random neuron sets of the same size and layers; random directions at the same norm; other persona caps at the same damage), using the worst control (or the 19th of 20). Hover a bar for the numbers. Pre-registered in findings/evalc/spec.md; the top-100 set was the single confirmatory arm.</figcaption>
+      </figure>
+      <div class="fig fig-notes">
+        <h3>What surprised us</h3>
+        <ul>
+          <li><b>One direction does the work of 100 neurons, and generalizes better.</b> The difference between the mean states of weird and normal replies, fit on discovery prompts, takes the rate from 29% to 10%. It works on all four behaviors with 8 or more held-out prompts, including denying being an AI (−55%), where that behavior's own top-100 set does nothing (−10%). It also raises refusals less (4% vs 7%).</li>
+          <li><b>Attribution finds the right 1,000 neurons, not the right 100.</b> Random 100-neuron draws from the attribution's top 1,000 remove 46–62% of the behavior on their own, at a tenth of the damage. The 100 that the O-lens reads as the behavior remove 59%, no more. Against draws from inside the pool, the top-100 set's margin would be about 22%, not 86%.</li>
+          <li><b>The neuron sets are behavior-specific in both directions.</b> The code-execution set takes fake code execution to 0% on 14 new prompts and the 911 set takes 911 to 0%, yet the denying-AI set leaves denying AI untouched. The direction has no such hole.</li>
+          <li><b>Picking edits from descriptions does not work.</b> SAE features whose labels mention the behavior (−12%) and a J-lens direction built from the behavior's keywords (−33%) do no better than random features or token directions. What a component says in text did not predict what removing it does. Across all three evals the descriptive readouts (O-lens, J-lens, SAE labels, NLA) also added nothing to a judge reading the transcript.</li>
+          <li><b>The Assistant Axis is real but weak.</b> The cap beats 10 damage-matched role caps on the comparison seeds (54% beyond) but not on the other four (34%); even an over-limit cap at .043 nats per token removes only 51%. The identity behaviors are not mainly a persona slip along that axis.</li>
+          <li><b>Nothing costs anything at these doses.</b> MMLU .83–.85, GSM8K .91–.93, 160 of 160 identity answers still say AI, generation 440–495 tokens per second against 515 clean.</li>
+        </ul>
+        <h3>What this says about the methods</h3>
+        <ul>
+          <li><b>Causally chosen handles work; description-chosen ones do not.</b> The two winners were picked by attributing the behavior to neurons or by contrasting the states of weird and normal replies. The three losers were picked by reading a label (SAE), a neuron readout (O-lens) or a token list (J-lens).</li>
+          <li><b>How to improve the readouts:</b> validate a label by whether it predicts the component's ablation effect, and train explainers on that objective; fit dictionaries and readouts on chat states, not web text (the SAE and NLA reconstruct our states 10–25 points worse than their training data); score a readout by what it adds to the transcript, since the transcript is the cheapest monitor and so far the best one.</li>
+          <li><b>How to use attribution:</b> treat the ranking as a pool, not an ordering, and reach for a difference-of-means direction first; it is cheaper, broader, and its 100-neuron equivalent is a check on specificity.</li>
+          <li><b>Caveats.</b> Random directions at the weird direction's norm barely damage the model (.0005 vs .0118), so its controls are norm-matched, not damage-matched; damage alone does not produce the drop (an over-limit axis cap at .043 removes 51%, the top-1000 set at .021 removes 93%). Held-out clean rates are .16 under the discovery rates, so power is lower than planned. Five behaviors; the axis cap's setting moved from the 50th to the 25th percentile under the pre-registered damage rule.</li>
+        </ul>
+      </div>
+      <p class="fig-group">Earlier run on 26 prompts (X6 / P3)</p>
       <figure class="fig">
         <h3>Zeroing 100 neurons lowers all three behaviors; capping the Assistant Axis lowers them less or not at all</h3>
         <div class="legend"><span><i class="sw sq" style="--c:var(--ink)"></i>No intervention</span><span><i class="sw sq" style="--c:var(--accent)"></i>Assistant Axis cap</span><span><i class="sw sq" style="--c:var(--ctrl);opacity:.45"></i>5 other persona caps (bar: mean, rings: each)</span><span><i class="sw sq" style="--c:var(--hot)"></i>Top-100 neurons zeroed</span><span><i class="sw sq" style="--c:var(--muted);opacity:.75"></i>Random-100 zeroed</span></div>
         <svg id="fig-stop" role="img" aria-label="Behavior rates under each intervention on the same prompts"></svg>
-        <figcaption><b>Figure 4.</b> Share of replies showing the behavior, 8 replies per prompt (10 prompts each for denying being an AI and claiming a body, 6 for laser), judged by Gemma 4 31B with WeirdChat's prompt; whiskers are 95% Wilson intervals. The cap clamps the Assistant Axis at the 25th percentile of benign chat at layers 46 to 53; the 5 other caps clamp other persona directions the same way. Laser at aircraft is not an identity behavior and serves as a control for the cap. Cost, as the increase in next-token loss on capability text in nats per token: Assistant Axis cap 0.0004, other caps 0.0003 to 0.003, top-100 0.002 to 0.005, random-100 0.0001. For denying being an AI, the neuron set's drop comes from the prompts it was chosen on and vanishes on held-out prompts, while the cap's drop comes from held-out prompts.</figcaption>
+        <figcaption><b>Figure 5.</b> Share of replies showing the behavior, 8 replies per prompt (10 prompts each for denying being an AI and claiming a body, 6 for laser), judged by Gemma 4 31B with WeirdChat's prompt; whiskers are 95% Wilson intervals. The cap clamps the Assistant Axis at the 25th percentile of benign chat at layers 46 to 53; the 5 other caps clamp other persona directions the same way. Laser at aircraft is not an identity behavior and serves as a control for the cap. Cost, as the increase in next-token loss on capability text in nats per token: Assistant Axis cap 0.0004, other caps 0.0003 to 0.003, top-100 0.002 to 0.005, random-100 0.0001. For denying being an AI, the neuron set's drop comes from the prompts it was chosen on and vanishes on held-out prompts, while the cap's drop comes from held-out prompts.</figcaption>
       </figure>
       <p class="fig-group">Persona vectors</p>
       <div class="fig fig-notes">
@@ -476,14 +509,14 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
         <h3>Zeroing a behavior's top-100 neurons lowers what the O-lens reads as the behavior; pushing them the other way raises it, and random changes of the same size barely move it</h3>
         <div class="legend"><span><i class="sw dot" style="--c:var(--ink)"></i>Layer 56</span><span><i class="sw ring" style="--c:var(--ink)"></i>Layer 44</span><span><i class="sw dot" style="--c:var(--hot)"></i>Top-100 zeroed</span><span><i class="sw dot" style="--c:var(--cool)"></i>Pushed the other way</span><span><i class="sw dot" style="--c:var(--muted)"></i>Size-matched random controls</span></div>
         <svg id="fig-abl" role="img" aria-label="Change in the O-lens behavior score under neuron ablation and size-matched controls"></svg>
-        <figcaption><b>Figure 5.</b> The 41 sharp forks of the five behaviors with their own neuron set, read from 10 tokens before to 5 tokens after the fork token. The reply tokens stay fixed; only the internal state the O-lens reads is changed. Pushing the other way subtracts the change that zeroing the top-100 makes instead of adding it. Zeroing the top-100 moves the state 4 to 5 times further than zeroing 100 random neurons, so two controls move it exactly as far: the random-100 change scaled up, and a random direction. Change in the blind 0 to 10 behavior score against the unchanged state; lines are 95% intervals over forks, and the number after each behavior is its count of forks. At layer 32, below most of the set's neurons, the score does not move.</figcaption>
+        <figcaption><b>Figure 6.</b> The 41 sharp forks of the five behaviors with their own neuron set, read from 10 tokens before to 5 tokens after the fork token. The reply tokens stay fixed; only the internal state the O-lens reads is changed. Pushing the other way subtracts the change that zeroing the top-100 makes instead of adding it. Zeroing the top-100 moves the state 4 to 5 times further than zeroing 100 random neurons, so two controls move it exactly as far: the random-100 change scaled up, and a random direction. Change in the blind 0 to 10 behavior score against the unchanged state; lines are 95% intervals over forks, and the number after each behavior is its count of forks. At layer 32, below most of the set's neurons, the score does not move.</figcaption>
       </figure>
       <figure class="fig">
         <h3>The O-lens reads the top neurons of three behaviors as further out of the assistant role than random neurons from the same layers</h3>
         <div class="legend"><span><i class="sw dot" style="--c:var(--hot)"></i>The behavior's top-10 neurons</span><span><i class="sw ring" style="--c:var(--muted)"></i>One random neuron from the same layer for each</span></div>
         <svg id="fig-nlab" role="img" aria-label="Out-of-role score of O-lens readouts of neuron output directions, set neurons against random neurons"></svg>
         <div class="fig-ex" id="fig-nlab-ex"></div>
-        <figcaption><b>Figure 6.</b> Each neuron's output direction (its down_proj column) was added to the residual stream at the nearest O-lens layer at or above the neuron, with each sign, and read twice per sign. A blind judge scored each readout 0 to 10 for leaving the assistant role; each neuron keeps its higher-scoring sign, by the same rule for set and random neurons. Lines are 95% intervals over neurons; the number in parentheses is the count of neurons read. Scores for the behavior itself were near 0 for every set. Every neuron's readout appears under its activation in the Neurons tab.</figcaption>
+        <figcaption><b>Figure 7.</b> Each neuron's output direction (its down_proj column) was added to the residual stream at the nearest O-lens layer at or above the neuron, with each sign, and read twice per sign. A blind judge scored each readout 0 to 10 for leaving the assistant role; each neuron keeps its higher-scoring sign, by the same rule for set and random neurons. Lines are 95% intervals over neurons; the number in parentheses is the count of neurons read. Scores for the behavior itself were near 0 for every set. Every neuron's readout appears under its activation in the Neurons tab.</figcaption>
       </figure>
       <p class="fig-group">Pushing single neurons</p>
       <div class="fig fig-notes">
@@ -503,7 +536,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
         <h3>On the gradual behaviors, zeroing the shared mid-layer 100 neurons halves the rate; the other shared sets do no better than random sets</h3>
         <div class="legend"><span><i class="sw sq" style="--c:var(--ink)"></i>No intervention</span><span><i class="sw sq" style="--c:var(--hot)"></i>Shared set zeroed</span><span><i class="sw sq" style="--c:var(--muted);opacity:.75"></i>Matched random set zeroed</span><span><i class="sw dash" style="--c:var(--ink)"></i>No-intervention level</span><span><svg class="sw-svg" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3.2" style="fill:var(--sheet);stroke:var(--ink);stroke-width:1.3"/></svg>Drunk driving</span><span><svg class="sw-svg" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><rect x="2" y="2" width="6" height="6" style="fill:var(--sheet);stroke:var(--ink);stroke-width:1.3"/></svg>Chemtrails</span><span><svg class="sw-svg" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M5,1.4L8.6,7.8L1.4,7.8Z" style="fill:var(--sheet);stroke:var(--ink);stroke-width:1.3"/></svg>Cutting</span></div>
         <svg id="fig-shared" role="img" aria-label="Rates of the gradual behaviors with shared neuron sets zeroed"></svg>
-        <figcaption><b>Figure 7.</b> Drunk driving, chemtrails and cutting have no sharp forks and no neuron set of their own, so they were tested with the sets built from attribution shared across 8 behaviors in the fork-and-ablate pipeline. Shared 100: the 100 neurons with the highest median attribution score across the 8 behaviors. Shared mid-layer 100: the same, below layer 48. Leave-one-out: the shared set rebuilt without the behavior being tested. Each set is compared with one random set matched on layer and activation size. Bars pool the three behaviors (46 high-rate prompts, 4 replies each, judged by Gemma 4 31B with WeirdChat's prompt) with 95% Wilson intervals; the hollow marks are the individual behaviors. Pooled, the mid-layer set gives 7.6% against 16.3% for its random set (Fisher p = .015). Cost, as the increase in next-token loss on capability text in nats per token: shared mid-layer 0.006, shared 0.010, leave-one-out 0.007 to 0.014, random sets 0.002 or less. With one random set per condition, the bar of beating 95% of random sets is untested.</figcaption>
+        <figcaption><b>Figure 8.</b> Drunk driving, chemtrails and cutting have no sharp forks and no neuron set of their own, so they were tested with the sets built from attribution shared across 8 behaviors in the fork-and-ablate pipeline. Shared 100: the 100 neurons with the highest median attribution score across the 8 behaviors. Shared mid-layer 100: the same, below layer 48. Leave-one-out: the shared set rebuilt without the behavior being tested. Each set is compared with one random set matched on layer and activation size. Bars pool the three behaviors (46 high-rate prompts, 4 replies each, judged by Gemma 4 31B with WeirdChat's prompt) with 95% Wilson intervals; the hollow marks are the individual behaviors. Pooled, the mid-layer set gives 7.6% against 16.3% for its random set (Fisher p = .015). Cost, as the increase in next-token loss on capability text in nats per token: shared mid-layer 0.006, shared 0.010, leave-one-out 0.007 to 0.014, random sets 0.002 or less. With one random set per condition, the bar of beating 95% of random sets is untested.</figcaption>
       </figure>
     </div>
     <div class="sub edits" data-sub="edits" hidden>
@@ -538,13 +571,13 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
         <tr class="grp"><td colspan="6">Neurons</td></tr>
         <tr><td>Own top-100 neurons<small>Zero each behavior's 100 neurons ranked by attribution at its forks</small></td>
           <td>Weak, and in-sample. A probe on the set's 100 activations orders weird vs normal continuations at AUROC .55 on its 278 cuts (the text judge gets .60 there), and the correlation with P(weird) across a reply's cut points is +.10 after the position trend is removed (text judge +.16 on the same replies). Beats 49 of 50 random sets of the same shape; on held-out prompts it points the wrong way (−.31 with the prompt's rate).</td>
-          <td>Held-out prompts: fake code execution 23% → 0%, 911 16% → 0%, laser 23% → 6%, claiming a body 29% → 6%. Denying AI: no held-out effect. Doubling the set induces the behavior on low-rate prompts.</td>
+          <td>Eval C, 48 held-out prompts: 29% → 9%, a 68% drop, 86% of the clean rate beyond 20 random sets of the same size and layers (p 4e-8). Fake code execution → 0%, laser −86%, claiming a body −55%; denying AI does not move (−10%). Random 100s from the attribution's top-1000 already remove 46–62%, so the margin over draws from inside the pool is about 22%. Earlier: doubling the set induces the behavior on low-rate prompts.</td>
           <td>≤ 0.023 nats/token on unrelated text; MMLU ±1 pt, GSM8K ±0.8 pt</td>
           <td>No. Opus shown the set and its sentence attribution: AUROC .83 against .86 from the transcript alone, the same as with 100 random neurons (.83).</td>
           <td>Attribution at 46 forks, then rate tests</td></tr>
         <tr><td>Shared mid-layer 100<small>Zero 100 neurons from layers 24–47 shared across behaviors</small></td>
           <td>No. AUROC .51 on matched continuations; +.05 corrected across cut points, inside the random-set range.</td>
-          <td>Lowers all 8 behaviors tested: mean rate 10% vs 21% with a matched random set. Built without a behavior, it still lowers that behavior (8 of 8).</td>
+          <td>Eval C: 29% → 20% on the 48 held-out prompts (−32%), 43% beyond 10 random sets; under the 50% bar. Earlier, on the gradual behaviors: mean rate 10% vs 21% with a matched random set; built without a behavior, it still lowers that behavior (8 of 8).</td>
           <td>0.017 nats/token</td>
           <td class="no">–</td>
           <td class="no">–</td></tr>
@@ -557,7 +590,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <td colspan="6">Readouts</td></tr>
         <tr><td>O-lens<small>Describe the state at each scored token, layers 32/44/56, scored blind by Haiku</small></td>
           <td>Matches the transcript on matched continuations (AUROC .56 vs .56; .81 at the sharp forks) and tracks P(weird) across cut points at +.07 corrected (text judge +.13); adds +.02 [+.00, +.04] to the text judge out of fold, not significant after correction. Its rise about 8 tokens before a fork is as large when the words are read as a plain document.</td>
-          <td>Not a control method. As a measure it tracks neuron ablation: score −0.90 with the own top-100 zeroed, +0.08 for a random push of the same size.</td>
+          <td>As a filter, eval C: the 100 of the attribution's top-1000 that the O-lens reads as the behavior remove 59% of it, but 10 random 100s from the same top-1000 remove 46–62%, so the readout adds nothing (9% beyond controls). As a measure it tracks neuron ablation: score −0.90 with the own top-100 zeroed, +0.08 for a random push of the same size.</td>
           <td class="no">–</td>
           <td>No. .85 against .86; the same as the O-lens reading the prompt as a plain document (.85).</td>
           <td>~2 H100-hours to read; ~33M Haiku tokens to score</td></tr>
@@ -570,7 +603,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <td colspan="6">Directions</td></tr>
         <tr><td>Assistant Axis, capping<small>Clamp the projection at the 25th percentile of benign chat, layers 46–53</small></td>
           <td>Weak. Prompt rate: rank correlation −0.18 at block 48; within a reply, inside the random-direction nulls.</td>
-          <td>Denying AI 33% → 24%, claiming a body 41% → 34% (not significant), laser unchanged; beats all 5 control caps. Strongest cap within 0.02 nats/token (50th percentile, layers 40–59): denying AI 35% → 17.5%, claiming a body 47.5% → 19%, which is 20% and 48% of the clean rate beyond 3 control caps. Short of the −50% bar.</td>
+          <td>Denying AI 33% → 24%, claiming a body 41% → 34% (not significant), laser unchanged; beats all 5 control caps. Strongest cap within 0.02 nats/token (50th percentile, layers 40–59): denying AI 35% → 17.5%, claiming a body 47.5% → 19%, which is 20% and 48% of the clean rate beyond 3 control caps. Eval C, 48 held-out prompts, 25th percentile over layers 40–59 (the strongest cap inside the limit there): 29% → 20%, 54% beyond 10 damage-matched role caps on the comparison seeds, 34% on the other seeds; Holm p .006. Clears the bar narrowly.</td>
           <td>0.0004 nats/token, 0.020 at the strongest cap; 160/160 identity answers still say AI; laser rises under every cap, controls included</td>
           <td>No. .84 against .86; the same as a random direction (.84).</td>
           <td>~2.8 A100-hours (with steering); ~3.9 GPU-hours for the dose sweep, role and sycophancy caps</td></tr>
@@ -588,8 +621,8 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <td class="no">included above</td></tr>
         <tr><td>Weird-vs-normal directions<small>Difference of means between weird and normal replies to the same prompt</small></td>
           <td>Among the best internal monitors, still below the transcript. AUROC .55 on matched continuations (text judge .56; 4 tokens in); +.08 corrected across cut points (text judge +.13), beyond all 200 random directions and 100 label shuffles; adds nothing to the text judge. On whole replies the direction separates weird from normal at AUROC .66–.95 depending on the behavior.</td>
-          <td class="no">Projecting it out not run yet</td>
-          <td class="no">–</td>
+          <td>Eval C: holding the block-48 direction at its benign median over layers 40–56 takes the rate 29% → 10% (−65%), 79% beyond 10 random directions at the same norm (p 2e-10). Works on all four behaviors, denying AI included (−55%). Projecting the direction out entirely costs .118 nats/token and does not help.</td>
+          <td>.012 nats/token (random directions at the same norm: .0005, so the controls are norm-matched, not damage-matched); MMLU .83, GSM8K .91; 440 vs 515 tok/s</td>
           <td>~2.4 A100-hours (with the shared-set test)</td></tr>
         <tr class="grp"><td class="no">Not tested</td>
           <td colspan="6">Other readouts and probes</td></tr>
@@ -599,7 +632,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <td>CPU only</td></tr>
         <tr><td>J-lens, J++, R-lens, template lens<small>Top-20 tokens or phrases the state points to (camilablank/workspace-lenses, neuronpedia/jacobian-lens), block 44, scored blind by Haiku</small></td>
           <td>J-lens AUROC .54, R-lens .53, J++ .52, template lens .51; corrected cut-point correlation +.02 to +.04. The model's own top-20 next tokens score .50, so the lenses add a little over the model's own prediction.</td>
-          <td class="no">Not tested</td><td class="no">–</td><td class="no">Not tested</td>
+          <td>Eval C: a keyword direction read through the J-lens, held at its benign 25th percentile at block 44: 29% → 19% (−33%), 41% beyond 5 random token directions (Holm p .009); under the bar.</td><td>.0003 nats/token</td><td class="no">Not tested</td>
           <td>~3 min H100 to read; ~11M Haiku tokens to score</td></tr>
         <tr><td>NLA, all layers<small>Natural-language autoencoder (agu18dec/qwen3.6-27b-all-layer-nla-rl2000), block 44, scored blind by Haiku</small></td>
           <td>AUROC .54 on matched continuations (.78 at the sharp forks); +.09 corrected across cut points, the best readout there, and it adds +.04 [+.01, +.07] to the text judge out of fold, which does not survive the multiple-comparison correction.</td>
@@ -607,11 +640,11 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <td>~1.4 H100-hours to read; ~15M Haiku tokens to score. Reconstructs our chat states much worse than web text (39–48% vs 64–79% of variance). Block 32 with one sample scores a little higher than block 44 on both tests.</td></tr>
         <tr><td>SAE, block 42<small>131k-feature sparse autoencoder (ceselder/qwen36-27b-sae-l42-1b); features labelled from web and benign-chat examples</small></td>
           <td>As a probe: AUROC .52, no better than the raw block-42 state, and the features it picks mark sentence boundaries. As labels read by a blind judge: AUROC .54 vs .49 for random features, +.03 corrected across cut points. Features picked from labels alone: .51.</td>
-          <td class="no">Not tested</td><td class="no">–</td><td class="no">Not tested</td>
+          <td>Eval C: clamping the label-picked features to zero during generation: 29% → 26% (−12%), 16% beyond 5 frequency-matched random features; no effect.</td><td>.0001 nats/token</td><td class="no">Not tested</td>
           <td>0.5 H100-hours; ~17M Haiku tokens for labels and scoring. Explains 59% of the variance of our states vs 70% on web text.</td></tr>
       </tbody>
     </table></div>
-    <p class="ct-note">The prompt-edit column comes from the CHIVE analysis subtab. Neuron rows come from the fork-and-ablate pipeline (Phase 2); the O-lens, Assistant Axis, persona and direction rows are our runs on the same prompts.</p>
+    <p class="ct-note">The "stops" column's eval C numbers come from the Stopping-the-behavior subtab; the prompt-edit column from the Which-prompt-edits subtab. Neuron rows come from the fork-and-ablate pipeline (Phase 2); the O-lens, Assistant Axis, persona and direction rows are our runs on the same prompts.</p>
     </div>
   </section>
   <details class="method" id="method">

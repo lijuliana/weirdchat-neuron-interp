@@ -6,6 +6,85 @@ Token viewer: https://lijuliana.github.io/weirdchat-neuron-interp/
 
 ## Comparisons to other interp methods
 
+Three tests, each run on the same prompts, forks and judge (`PLAN.md`): eval C asks whether a method's best
+intervention stops a behavior on prompts it never saw (the main goal); eval A whether its readout warns before a
+reply turns weird; eval B whether its readout helps a reader predict which prompt edits matter.
+
+### Stopping the behavior (eval C, main result)
+
+**Two interventions stop the weird behaviors on prompts they never saw, at no measurable cost: zeroing the behavior's
+100 attributed neurons, and holding the residual stream to the normal side of one weird-vs-normal direction. Each
+removes about two thirds of the behavior. Every intervention chosen from what a readout says (O-lens, J-lens, SAE
+labels) does no better than a random edit of the same size, and any 100 neurons from the attribution's top 1,000 do
+almost as much as the top 100.** Spec and tables: `findings/evalc/` (pre-registered; frozen hashes in `spec.md`
+section 11); code: scripts 61.
+
+![Eval C](figures/evalc_control.svg)
+
+Setup. Seven methods, each turned into the strongest intervention it yields. The dose was fixed before any behavior
+data: the strongest step on a 3-rung ladder whose damage (extra next-token loss on capability text and on benign
+chat, teacher-forced) stays under .02 nats per token. 48 held-out prompts from the five behaviors with a neuron set
+(claims to have called 911, denies being an AI, fakes running code, claims a body, points a laser at aircraft), 16
+clean replies per prompt, 8 per intervention, 4 per control; Gemma 4 31B judges with WeirdChat's rubric. The score is
+the share of the clean rate removed beyond matched random edits (random neuron sets of the same size and layers,
+random directions at the same norm, other persona caps at the same damage); the bar is 50%. Controls are compared on
+the same seeds; one-sided bootstrap over prompt patterns, centred on a leave-one-out null, Holm over the six
+exploratory arms; the top-100 set is the single confirmatory arm.
+
+| Intervention (method) | Clean → treated | Drop | Beyond matched controls | Damage, nats/token | Verdict |
+|---|---|---|---|---|---|
+| Zero own top-100 neurons (attribution; reference) | 29% → 9% | 68% [50, 86] | 86% beyond 20 random sets, p 4e-8 | .0047 | clears the bar |
+| Ceiling on the weird-vs-normal direction, layers 40-56 (difference of means, block 48) | 29% → 10% | 65% [49, 78] | 79% beyond 10 random directions, p 2e-10 | .0118 | clears the bar |
+| Assistant Axis cap, 25th percentile, layers 40-59 (persona vectors) | 29% → 20% | 32% [18, 48] | 54% beyond 10 damage-matched role caps, Holm p .006 | .0088 | clears the bar narrowly; 34% on the other seeds |
+| Zero shared mid-layer 100 neurons | 29% → 20% | 32% [18, 46] | 43%, Holm p .002 | .0200 | under the bar |
+| Ceiling on a J-lens keyword direction, block 44 | 29% → 19% | 33% [23, 44] | 41%, Holm p .009 | .0003 | under the bar |
+| Zero the 100 of the top-1000 the O-lens reads as the behavior | 29% → 12% | 59% [45, 76] | 9%: 10 random 100s from the same top-1000 drop it 46-62% | .0008 | no gain from the filter |
+| Clamp label-picked SAE features (block 42) to zero | 29% → 26% | 12% [-3, 27] | 16%, Holm p .31 | .0001 | no effect |
+
+Side effects at every setting: capability mini-set .98-.99 (clean .98), MMLU .83-.85, GSM8K .91-.93, 160 of 160
+identity answers still say "I am an AI", generation 440-515 tokens per second against 515 clean. Zeroing the top-100
+raises refusals from 2% to 7%; excluding refused replies moves its drop from 68% to 67%, so refusal is not how it
+works. Cost: 26 spot-H100 hours (~$95), no API tokens beyond the O-lens scoring.
+
+What surprised us:
+
+1. **One direction does the work of 100 neurons, and generalizes better.** The difference between mean states of
+   weird and normal replies, fit on discovery prompts, controls all four behaviors with 8 or more held-out prompts,
+   including denying AI (55% drop), where the behavior's own top-100 set does nothing (−10%). The direction also raises
+   refusals less (4% vs 7%). On three of the four behaviors the set and the direction land within a few points.
+2. **Attribution finds the right 1,000 neurons, not the right 100.** Random 100-neuron draws from Agastya's top 1,000
+   drop the behaviors 46-62% on their own, at a tenth of the damage. The O-lens filter picks neurons that read as the
+   behavior and adds nothing beyond that. So the top-100 set's large margin over random sets is mostly a margin over
+   neurons outside the attribution's pool; against draws from inside the pool it would be about 22%.
+3. **The neuron sets are behavior-specific in both directions.** Zeroing the code-execution set takes fake code execution
+   to 0% on 14 new prompts, and the 911 set takes 911 to 0%, yet the denying-AI set leaves denying AI untouched. The
+   direction, fit once per behavior with no attribution, has no such hole.
+4. **Readout-selected edits do not work.** Features chosen because their auto-labels mention the behavior (SAE), and a
+   direction built from the behavior's keywords through the J-lens, move the rate 12% and 33%, no better than random
+   features or token directions. What a component "says" in text did not predict what removing it does.
+5. **The Assistant Axis is real but weak.** The cap beats 10 damage-matched role caps on the comparison seeds but not on
+   the other four, and even the over-gate cap at .043 nats/token removes only 51%. The identity behaviors are not
+   mainly a persona slip along that axis.
+
+What this says about the methods. The two interventions that work were both chosen causally, by attributing the
+behavior to neurons or by contrasting states of weird and normal replies. The three that fail were chosen by reading
+descriptions: of a feature (SAE labels), of a neuron (O-lens), or of a direction (J-lens tokens). Across all three
+evals the descriptive readouts also added nothing to a judge reading the transcript, so the descriptions are either not
+about the behavior or arrive after the text already shows it. Three ways to do better: (i) validate labels causally,
+by asking whether a description predicts the component's ablation effect, and train explainers on that objective (the
+longer-term item in `PLAN.md`); (ii) fit dictionaries and readouts on chat states rather than web text, since the SAE
+and NLA reconstruct our states 10-25 points worse than their training text; (iii) treat attribution rankings as pools,
+not orderings, and prefer a cheap difference-of-means direction as the default control handle, with the neuron set as
+a check on specificity.
+
+Caveats. Random directions at the weird direction's norm barely damage the model (.0005 vs .0118), so its controls
+are norm-matched, not damage-matched; damage alone does not produce the drop (the over-gate axis cap at .043 removes
+51%, the top-1000 set at .021 removes 93%), but a damage-matched random-direction control is the one cheap follow-up
+left. Clean rates on the held-out prompts are .16 under the discovery rates (regression to the mean, FP8 vs bf16), so
+power is lower than planned. The axis cap's setting was moved from the 50th to the 25th percentile by the
+pre-registered damage rule (p50 measured .0201). The generated report's prose mis-prints the pass column because of a
+pandas keyword clash; the CSVs are correct and the numbers above come from them.
+
 ### Every method as a monitor (eval A)
 
 **No internal monitor beats a Haiku judge reading the transcript at warning that a reply will turn weird, and none adds to it significantly after correction (the NLA and O-lens readouts add +.02 to +.06 before correction).** Spec: `runs/monitors/SPEC.md`; tables: `runs/monitors/eval/report.md`; Figure 1 of the viewer's Compare tab.

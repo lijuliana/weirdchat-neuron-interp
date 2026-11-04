@@ -1,4 +1,5 @@
 """Aggregate data for the viewer's Compare methods tab. Writes <out>/compare.json (default viewer/out_public):
+  evalc: eval C control results (runs/evalc/judge/eval tables) for the Stopping-the-behavior pane;
   within  per behavior and pooled: mean over fork replies (>= 4 cut points) of the per-reply Spearman between measured
           P(weird | prefix) and each signal at the same cut: text judge, O-lens L56 behavior score, and the Assistant
           Axis projection at block 48 with its sign flipped (lower = further from the assistant). 95% CI over replies.
@@ -196,9 +197,34 @@ try:
 except FileNotFoundError as e:
     print("mon: skipped,", e)
 
+
+# ---- eval C (control): runs/evalc/judge/eval/{main_table,by_behavior}.csv, written by scripts/61_evalc_analyze.py
+evalc = None
+try:
+    mt = pd.read_csv("runs/evalc/judge/eval/main_table.csv")
+    bb = pd.read_csv("runs/evalc/judge/eval/by_behavior.csv")
+    short = {"C1a": "Top-100 neurons", "C1b": "Shared mid-layer 100", "C2": "Assistant Axis cap", "C3": "Weird direction",
+             "C5": "SAE features", "C6": "J-lens direction", "C7": "O-lens picked neurons"}
+    arms = []
+    for r in mt.itertuples():
+        arms.append({"arm": r.arm, "short": short.get(r.arm, r.arm), "label": r.label, "condition": r.condition,
+                     "clean": f3(r.clean), "arm8": [f3(r.arm8), f3(r.arm8_lo), f3(r.arm8_hi)],
+                     "drop": [f3(r.raw_drop), f3(r.raw_drop_lo), f3(r.raw_drop_hi)],
+                     "excess": [f3(r.excess), f3(r.excess_lo), f3(r.excess_hi)],
+                     "ctrl": [f3(r.ctrl_q), f3(r.ctrl_min), f3(r.ctrl_max), int(r.n_controls)], "family": r.control_family,
+                     "damage": float(f"{r.damage:.4f}"), "holm": None if pd.isna(r.holm_p) else f3(r.holm_p), "p": f3(r.boot_p),
+                     "pass": bool(r.excess >= .5 and r.damage <= .02), "confirmatory": bool(r.confirmatory),
+                     "mmlu": f3(r.mmlu), "gsm8k": f3(r.gsm8k), "deploy": r.deploy_overhead})
+    by = defaultdict(dict)
+    for r in bb[bb.status.str.startswith("per-behavior")].itertuples():
+        by[r.arm][r.behavior] = {"clean": f3(r.clean), "arm8": f3(r.arm8), "drop": f3(r.raw_drop), "excess": f3(r.excess), "n": int(r.n_prompts)}
+    evalc = {"arms": arms, "by": dict(by), "bar": 0.5, "gate": 0.02, "n_prompts": int(mt.n_prompts.iloc[0]), "clean": f3(mt.clean.iloc[0])}
+except FileNotFoundError as e:
+    print("evalc: skipped,", e)
+
 titles = {b["id"]: b["title"] for b in json.load(open(f"{args.out}/index.json"))["behaviors"]}
 json.dump({"titles": titles, "within": within, "fork": fork, "stop": stop, "axis": {"tau": 8.52, "mu": 11.13},
-           "dirs": dirs, "shared": shared, "abl": abl, "nlab": nlab, "mon": mon},
+           "dirs": dirs, "shared": shared, "abl": abl, "nlab": nlab, "mon": mon, "evalc": evalc},
           open(f"{args.out}/compare.json", "w"), separators=(",", ":"))
 if mon: print("mon:", [(r["id"], r["auroc"] and r["auroc"][0], r["partial"] and r["partial"][0]) for r in mon["rows"]])
 print("within all:", within["all"])
