@@ -437,6 +437,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
       <button type="button" data-sub="olens" aria-selected="false">Reading the neurons</button>
       <button type="button" data-sub="shared" aria-selected="false">Behaviors without a set</button>
       <button type="button" data-sub="edits" aria-selected="false">Eval B · Which prompt edits matter</button>
+      <button type="button" data-sub="why" aria-selected="false">Why readouts fall short</button>
       <button type="button" data-sub="table" aria-selected="false">All methods</button>
     </nav>
     <div class="figs sub" id="compare-figs" data-sub="warn" hidden>
@@ -562,6 +563,39 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
         <li><b>Caveats.</b> The neuron test covers the 102 prompts of behaviors with a set of their own, and the claiming-a-body set fails its validity check (a random set varies more across prompts). The sentence attribution needed 256 to 2,048 integrated-gradient steps before it summed to the set's change. Laser is thin because Opus refused 9 to 27 laser claims per run. Confidence intervals are a paired bootstrap over prompt patterns; the three methods share one Holm correction.</li>
       </ul>
       <p class="src">Scale: 93,728 judged replies on 8 spot H100s, 920 claims on 115 prompts (35% TRUE), 12,176 Opus 5.5 calls over 12 runs. Full write-up in findings/chive/report.md; every design choice and the freeze log in findings/chive/design.md.</p>
+    </div>
+    <div class="sub" data-sub="why" hidden>
+      <div class="fig fig-notes">
+        <h3>The readout methods failed all three tests because, by training, they forecast the next text; here the transcript shows that text a moment later</h3>
+        <p class="s">Readout methods turn one residual-stream vector into words: natural language autoencoders (NLA), the oracle lens (O-lens), the Jacobian lens family (J-lens, J++, R-lens, template lens) and sparse-autoencoder (SAE) feature labels. On WeirdChat they tied a judge reading the transcript as monitors (.54 to .56 against .56), did not help a reader predict which prompt edits matter, and did no better than random edits when used to choose an intervention. Full analysis with sources in findings/readouts.md.</p>
+        <h3>What the method papers measured</h3>
+        <ul>
+          <li><b>A hidden target, any layer, no text baseline.</b> WorkspaceBench, the J-lens paper, the NLA paper, Activation Oracles and LatentQA all score a reader on naming something built to be absent from the text: an unspoken intermediate step, a planned rhyme, a secret word, an implanted quirk. An item passes if any layer at any position hits, readers are compared with each other, and the text-only floor is reported but not subtracted.</li>
+          <li><b>Where a text baseline exists, readers do not beat it.</b> Li et al. (ICML 2026): a verbalizer given no activation scores the same as one given the activation. CHIVE (Karvonen et al. 2026): transcript only .814, with an activation oracle .810, with an NLA .808. The MATS WorkspaceBench control: a text model given the prompt scores .89, given the prompt plus the NLA's reading .88. On WorkspaceBench's own knowledge-cutoff family, the model reading only the text ties the lens.</li>
+          <li><b>Case studies are anecdotes.</b> The J-lens and NLA case studies are single transcripts "drawn from a pre-release audit" with no selection procedure; steering from an edited NLA explanation succeeds about half the time; the J-lens's own two-hop swaps succeed 54 to 70% of the time, so a 33% drop from one keyword direction is what that literature predicts.</li>
+        </ul>
+        <h3>Why they failed here, most damaging first</h3>
+        <ul>
+          <li><b>Readouts forecast the next text.</b> The O-lens's reconstructor is trained to predict the state that precedes a phrase, so its reward selects the model's own likely continuations; on WorkspaceBench four sampled continuations score .35 against .41 for the trained lens. Here the O-lens rises before a fork by the same amount whether the words are a chat or a plain document, and its only strong signal (.82) is at forks where the deciding token is already written. A reader who forecasts the continuation cannot beat a reader who sees it.</li>
+          <li><b>The state has not decided yet.</b> On the 500 cut points a probe trained on the full residual state scores .55, the same as every verbalizer and the text judge, against a judge-noise ceiling of .87. The weird turn is a late, stochastic event. No reader can report a decision the model has not made, and the hidden-target benchmarks never face this because their targets are computed before the read position by construction.</li>
+          <li><b>A component is not a state.</b> Read blind, the O-lens separates the 100 causally important neurons from the other 900 of the attribution's top-1,000 at AUROC .46 to .63; 0 to 7% of the top-100 score 25 or more for their behavior. The same lens registers their removal in a real state at −0.9 on 0 to 10 (+0.1 for a random change of the same size). It is a good thermometer and a bad map. SAE labels describe where a feature fires, not what clamping it does; J-lens keywords are the describer's prior, not the model's mechanism.</li>
+          <li><b>The verbalizer answers from its own knowledge.</b> The O-lens of the prompt read as a plain document helps Opus predict prompt edits exactly as much as the O-lens of the chat state (.848 vs .849). Which sentence drives a behavior is a counterfactual fact that no single-state readout can carry.</li>
+          <li><b>Confabulation and web-text training are secondary.</b> The NLA and SAE reconstruct our chat states 10 to 25 points worse than their training text; the O-lens was trained on this model's own chat replies and confabulates less, and still gains nothing.</li>
+        </ul>
+        <h3>What the O-lens fixes over the NLA, and the new affine-map variant</h3>
+        <ul>
+          <li><b>Fixes.</b> Phrase bullets instead of a long essay; reconstruction error measured in a whitened basis; a reconstructor that looks before the phrase, targeting "poised to express" content; training on the model's own chat replies. Fewer contradicted claims than the NLA (6.6 to 8.5% hallucinated share against "nearly every" NLA readout). Each fix improves how well the lens says what the model is about to say; none changes what the lens is about.</li>
+          <li><b>Affine-map variant</b> (camila-blank/qwen3.6-27b-olens-affwhitened-rl600): the reward's reconstructor is a closed-form ridge map in the whitened basis instead of a trained network, and the carrier prompt asks for the text that immediately follows the activation. Card numbers: WorkspaceBench .722 against .744 for the default lens, hallucinated share 6.6% against 8.5%, higher concept precision. Prediction before our trial: a ridge reconstructor cannot be gamed by private codes, so claims should be more literal, but a following-text readout is a continuation sample by construction; expect AUROC within .02 of the current lens on the cut points and no gain over the text judge.</li>
+        </ul>
+        <h3>What would make readouts useful</h3>
+        <ul>
+          <li><b>Validate labels causally:</b> score a description by whether it predicts what removing the component does, and train explainers on that.</li>
+          <li><b>Make the text control standard:</b> report the reader at the same position as a transcript judge, plus a no-activation ablation of the reader.</li>
+          <li><b>Report the probe ceiling</b> before claiming a readout can or cannot read a target.</li>
+          <li><b>Evaluate on natural behaviors,</b> not implanted quirks or withheld secrets.</li>
+          <li><b>Use readouts as instruments, not selectors:</b> pick handles by contrast inside the model (attribution pools, difference-of-means directions), then use the lens to describe what the handle changed, which is the one place our lenses showed clear signal.</li>
+        </ul>
+      </div>
     </div>
     <div class="sub" data-sub="table" hidden>
     <h3 class="ct-head">All methods</h3>

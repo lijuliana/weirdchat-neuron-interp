@@ -85,6 +85,39 @@ power is lower than planned. The axis cap's setting was moved from the 50th to t
 pre-registered damage rule (p50 measured .0201). The generated report's prose mis-prints the pass column because of a
 pandas keyword clash; the CSVs are correct and the numbers above come from them.
 
+### Why the readouts did not beat reading the text
+
+**The readout methods (NLA, O-lens, J-lens family, SAE labels) failed all three tests, and the reason is structural:
+by training objective they forecast the next text, which the transcript shows a moment later. Two further causes are
+specific to this setting: at the positions where a monitor would help, the state has not decided yet, and a
+description of a component is not a description of a state.** Full analysis with the literature:
+[findings/readouts.md](findings/readouts.md).
+
+1. **The method papers never ran this comparison.** WorkspaceBench, the J-lens paper, the NLA paper, Activation
+   Oracles and LatentQA all score a reader on naming something built to be absent from the text (an unspoken
+   intermediate, a planned rhyme, a secret word, an implanted quirk), pass an item if any layer at any position hits,
+   and compare lens against lens. The text-only floor is reported but not subtracted. The three studies that do run a
+   text baseline on visible behavior (Li et al., ICML 2026; CHIVE; the MATS WorkspaceBench control) find zero uplift.
+2. **Readouts forecast the next text.** The O-lens reconstructor is trained to predict the state that precedes a
+   phrase, so its reward selects the model's own likely continuations; four sampled continuations score 0.35 on
+   WorkspaceBench against 0.41 for the trained lens. Here the O-lens rises before a fork by the same amount whether the
+   words are a chat or a plain document, and its only strong signal (.82) is at forks where the token is already
+   written.
+3. **The state has not decided yet.** A probe trained on the full state scores .55 on the 500 cut points, the same as
+   the verbalizers and the text, against a judge-noise ceiling of .87. The weird turn is a late, stochastic event; no
+   reader can report a decision the model has not made.
+4. **A component is not a state.** Read blind, the O-lens separates the 100 causally important neurons from the other
+   900 of the attribution's top-1,000 at AUROC .46 to .63, while it registers their removal in a real state at −0.9 on
+   0 to 10. It is a good thermometer and a bad map. SAE labels and J-lens keywords fail the same way.
+5. **The verbalizer answers from its own knowledge** (Li et al.): the O-lens of the prompt read as a plain document
+   helps Opus predict edits exactly as much as the O-lens of the chat state.
+6. **Confabulation and web-text training are real but secondary.** The O-lens was trained on this model's chat replies
+   and confabulates less than the NLA; it still gains nothing.
+
+What would help: validate labels by what removing the component does; make "same position as a text judge, with a
+no-activation control" the standard monitor test; report the probe ceiling before the readout; evaluate on natural
+behaviors; and use readouts to measure interventions (where they work) rather than to choose them (where they do not).
+
 ### Every method as a monitor (eval A)
 
 **No internal monitor beats a Haiku judge reading the transcript at warning that a reply will turn weird, and none adds to it significantly after correction (the NLA and O-lens readouts add +.02 to +.06 before correction).** Spec: `runs/monitors/SPEC.md`; tables: `runs/monitors/eval/report.md`; Figure 1 of the viewer's Compare tab.

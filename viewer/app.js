@@ -135,7 +135,7 @@ function renderBehavior(b) {
 }
 const METHODS = '__methods';
 // Compare-methods subtabs: each pane lists the figures it holds, drawn when the pane is shown (hidden panes have no width).
-const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figEvalC, figStop], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [], table: () => [] };
+const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figEvalC, figStop], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [], why: () => [], table: () => [] };
 function showSub(k) {
   if (!SUBS[k]) k = 'stop';
   state.sub = k;
