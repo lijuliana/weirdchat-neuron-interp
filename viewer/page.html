@@ -437,7 +437,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
       <button type="button" data-sub="olens" aria-selected="false">Reading the neurons</button>
       <button type="button" data-sub="shared" aria-selected="false">Behaviors without a set</button>
       <button type="button" data-sub="edits" aria-selected="false">Eval B · Which prompt edits matter</button>
-      <button type="button" data-sub="why" aria-selected="false">Why readouts fall short</button>
+      <button type="button" data-sub="why" aria-selected="false">Why reading the transcript beats the readout methods</button>
       <button type="button" data-sub="table" aria-selected="false">All methods</button>
     </nav>
     <div class="figs sub" id="compare-figs" data-sub="warn" hidden>
@@ -468,18 +468,18 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
         <figcaption><b>Figure 4.</b> Seven methods, each turned into the strongest intervention whose damage (extra next-token loss on capability text and benign chat) stays under .02 nats per token; the setting was fixed before any behavior was measured. 48 held-out prompts from the five behaviors with a neuron set, 16 clean replies per prompt, 8 per intervention, 4 per control, judged by Gemma 4 31B. Red: share of the clean rate (29%) removed, with its 95% bootstrap interval over prompt patterns. Blue: the same drop measured against matched random edits (random neuron sets of the same size and layers; random directions at the same norm; other persona caps at the same damage), using the worst control (or the 19th of 20). Hover a bar for the numbers. Pre-registered in findings/evalc/spec.md; the top-100 set was the single confirmatory arm.</figcaption>
       </figure>
       <div class="fig fig-notes">
-        <h3>What surprised us</h3>
+        <h3>Results that differ from what we expected</h3>
         <ul>
           <li><b>One direction does the work of 100 neurons, and generalizes better.</b> The difference between the mean states of weird and normal replies, fit on discovery prompts, takes the rate from 29% to 10%. It works on all four behaviors with 8 or more held-out prompts, including denying being an AI (−55%), where that behavior's own top-100 set does nothing (−10%). It also raises refusals less (4% vs 7%).</li>
           <li><b>Attribution finds the right 1,000 neurons, not the right 100.</b> Random 100-neuron draws from the attribution's top 1,000 remove 46–62% of the behavior on their own, at a tenth of the damage. The 100 that the O-lens reads as the behavior remove 59%, no more. Against draws from inside the pool, the top-100 set's margin would be about 22%, not 86%.</li>
-          <li><b>The neuron sets are behavior-specific in both directions.</b> The code-execution set takes fake code execution to 0% on 14 new prompts and the 911 set takes 911 to 0%, yet the denying-AI set leaves denying AI untouched. The direction has no such hole.</li>
+          <li><b>The neuron sets work only on their own behavior, and not always then.</b> The code-execution set takes fake code execution to 0% on 14 new prompts and the 911 set takes 911 to 0%, yet the denying-AI set leaves denying AI untouched. The direction has no such hole.</li>
           <li><b>Picking edits from descriptions does not work.</b> SAE features whose labels mention the behavior (−12%) and a J-lens direction built from the behavior's keywords (−33%) do no better than random features or token directions. What a component says in text did not predict what removing it does. Across all three evals the descriptive readouts (O-lens, J-lens, SAE labels, NLA) also added nothing to a judge reading the transcript.</li>
-          <li><b>The Assistant Axis is real but weak.</b> The cap beats 10 role caps of equal damage on the four replies per prompt used for the control comparison (54% beyond) but not on the other four replies (34%); even an over-limit cap at .043 nats per token removes only 51%. The identity behaviors are not mainly a persona slip along that axis.</li>
-          <li><b>Nothing costs anything at these doses.</b> MMLU .83–.85, GSM8K .91–.93, 160 of 160 identity answers still say AI, generation 440–495 tokens per second against 515 clean.</li>
+          <li><b>The Assistant Axis cap has a small effect.</b> The cap beats 10 role caps of equal damage on the four replies per prompt used for the control comparison (54% beyond) but not on the other four replies (34%); even an over-limit cap at .043 nats per token removes only 51%. The identity behaviors are not mainly a persona slip along that axis.</li>
+          <li><b>No intervention at its chosen dose measurably damages the model.</b> MMLU .83–.85, GSM8K .91–.93, 160 of 160 identity answers still say AI, generation 440–495 tokens per second against 515 clean.</li>
         </ul>
-        <h3>What this says about the methods</h3>
+        <h3>Implications for the methods</h3>
         <ul>
-          <li><b>Causally chosen handles work; description-chosen ones do not.</b> The two winners were picked by attributing the behavior to neurons or by contrasting the states of weird and normal replies. The three losers were picked by reading a label (SAE), a neuron readout (O-lens) or a token list (J-lens).</li>
+          <li><b>Interventions chosen by causal contrast work; interventions chosen from descriptions do not.</b> The two winners were picked by attributing the behavior to neurons or by contrasting the states of weird and normal replies. The three losers were picked by reading a label (SAE), a neuron readout (O-lens) or a token list (J-lens).</li>
           <li><b>How to improve the readouts:</b> validate a label by whether it predicts what removing the component does, and train explainers on that objective; fit dictionaries and readouts on chat states, not web text (the SAE and NLA reconstruct our states 10–25 points worse than their training data); score a readout by what it adds to the transcript, since the transcript is the cheapest monitor and so far the best one.</li>
           <li><b>How to use attribution:</b> treat the ranking as a pool, not an ordering, and reach for a difference-of-means direction first; it is cheaper, broader, and its 100-neuron equivalent is a check on specificity.</li>
           <li><b>Caveats.</b> Random directions at the weird direction's norm barely damage the model (.0005 vs .0118), so its controls are norm-matched, not damage-matched; damage alone does not produce the drop (an over-limit axis cap at .043 removes 51%, the top-1000 set at .021 removes 93%). Held-out clean rates are .16 under the discovery rates, so power is lower than planned. Five behaviors; the axis cap's setting moved from the 50th to the 25th percentile under the pre-registered damage rule.</li>
@@ -566,7 +566,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
     </div>
     <div class="sub" data-sub="why" hidden>
       <div class="fig fig-notes">
-        <h3>The readout methods failed all three tests because, by training, they forecast the next text; here the transcript shows that text a moment later</h3>
+        <h3>Reading the transcript beats every readout method on all three tests, because the readouts are trained to predict the next text and the transcript contains it</h3>
         <p class="s">Readout methods turn one residual-stream vector into words: natural language autoencoders (NLA), the oracle lens (O-lens), the Jacobian lens family (J-lens, J++, R-lens, template lens) and sparse-autoencoder (SAE) feature labels. On WeirdChat they tied a judge reading the transcript as monitors (.54 to .56 against .56), did not help a reader predict which prompt edits matter, and did no better than random edits when used to choose an intervention. Full analysis with sources in findings/readouts.md.</p>
         <h3>What the method papers measured</h3>
         <ul>
@@ -574,11 +574,11 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <li><b>Where a text baseline exists, readers do not beat it.</b> Li et al. (ICML 2026): a verbalizer given no activation scores the same as one given the activation. CHIVE (Karvonen et al. 2026): transcript only .814, with an activation oracle .810, with an NLA .808. The MATS WorkspaceBench control: a text model given the prompt scores .89, given the prompt plus the NLA's reading .88. On WorkspaceBench's own knowledge-cutoff family, the model reading only the text ties the lens.</li>
           <li><b>Case studies are anecdotes.</b> The J-lens and NLA case studies are single transcripts "drawn from a pre-release audit" with no selection procedure; steering from an edited NLA explanation succeeds about half the time; the J-lens's own two-hop swaps succeed 54 to 70% of the time, so a 33% drop from one keyword direction is what that literature predicts.</li>
         </ul>
-        <h3>Why they failed here, most damaging first</h3>
+        <h3>Why the readouts fail on WeirdChat, ordered by how much each cause explains</h3>
         <ul>
           <li><b>Readouts forecast the next text.</b> The O-lens's reconstructor is trained to predict the state that precedes a phrase, so its reward selects the model's own likely continuations; on WorkspaceBench four sampled continuations score .35 against .41 for the trained lens. Here the O-lens rises before a fork by the same amount whether the words are a chat or a plain document, and its only strong signal (.82) is at forks where the deciding token is already written. A reader who forecasts the continuation cannot beat a reader who sees it.</li>
           <li><b>The state has not decided yet.</b> On the 500 cut points a probe trained on the full residual state scores .55, the same as every verbalizer and the text judge, against a judge-noise ceiling of .87. The weird turn is a late, stochastic event. No reader can report a decision the model has not made, and the hidden-target benchmarks never face this because their targets are computed before the read position by construction.</li>
-          <li><b>A component is not a state.</b> Read blind, the O-lens separates the 100 causally important neurons from the other 900 of the attribution's top-1,000 at AUROC .46 to .63; 0 to 7% of the top-100 score 25 or more for their behavior. The same lens registers their removal in a real state at −0.9 on 0 to 10 (+0.1 for a random change of the same size). It is a good thermometer and a bad map. SAE labels describe where a feature fires, not what clamping it does; J-lens keywords are the describer's prior, not the model's mechanism.</li>
+          <li><b>A component is not a state.</b> Read blind, the O-lens separates the 100 causally important neurons from the other 900 of the attribution's top-1,000 at AUROC .46 to .63; 0 to 7% of the top-100 score 25 or more for their behavior. The same lens registers their removal in a real state at −0.9 on 0 to 10 (+0.1 for a random change of the same size). It measures what an intervention changed and cannot say which intervention to make. SAE labels describe where a feature fires, not what clamping it does; J-lens keywords are the describer's prior, not the model's mechanism.</li>
           <li><b>The verbalizer answers from its own knowledge.</b> The O-lens of the prompt read as a plain document helps Opus predict prompt edits exactly as much as the O-lens of the chat state (.848 vs .849). Which sentence drives a behavior is a counterfactual fact that no single-state readout can carry.</li>
           <li><b>Confabulation and web-text training are secondary.</b> The NLA and SAE reconstruct our chat states 10 to 25 points worse than their training text; the O-lens was trained on this model's own chat replies and confabulates less, and still gains nothing.</li>
         </ul>
@@ -587,13 +587,13 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <li><b>Fixes.</b> Phrase bullets instead of a long essay; reconstruction error measured in a whitened basis; a reconstructor that looks before the phrase, targeting "poised to express" content; training on the model's own chat replies. Fewer contradicted claims than the NLA (6.6 to 8.5% hallucinated share against "nearly every" NLA readout). Each fix improves how well the lens says what the model is about to say; none changes what the lens is about.</li>
           <li><b>Affine-map variant</b> (camila-blank/qwen3.6-27b-olens-affwhitened-rl600): the reward's reconstructor is a closed-form ridge map in the whitened basis instead of a trained network, and the carrier prompt asks for the text that immediately follows the activation. Card numbers: WorkspaceBench .722 against .744 for the default lens, hallucinated share 6.6% against 8.5%, higher concept precision. Prediction before our trial: a ridge reconstructor cannot be gamed by private codes, so claims should be more literal, but a following-text readout is a continuation sample by construction; expect AUROC within .02 of the current lens on the cut points and no gain over the text judge.</li>
         </ul>
-        <h3>What would make readouts useful</h3>
+        <h3>Changes that would make readouts useful</h3>
         <ul>
           <li><b>Validate labels causally:</b> score a description by whether it predicts what removing the component does, and train explainers on that.</li>
           <li><b>Make the text control standard:</b> report the reader at the same position as a transcript judge, plus a no-activation ablation of the reader.</li>
           <li><b>Report the probe ceiling</b> before claiming a readout can or cannot read a target.</li>
           <li><b>Evaluate on natural behaviors,</b> not implanted quirks or withheld secrets.</li>
-          <li><b>Use readouts as instruments, not selectors:</b> pick handles by contrast inside the model (attribution pools, difference-of-means directions), then use the lens to describe what the handle changed, which is the one place our lenses showed clear signal.</li>
+          <li><b>Use readouts to measure interventions, not to choose them:</b> choose interventions by contrast inside the model (attribution pools, difference-of-means directions), then use the lens to describe what the intervention changed, which is the one place our lenses showed clear signal.</li>
         </ul>
       </div>
     </div>

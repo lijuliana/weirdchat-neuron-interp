@@ -1,4 +1,4 @@
-# Why the readouts did not beat reading the text, and what would
+# Why reading the transcript beats the readout methods, and what would change that
 
 Written 2026-11-04 after eval C. Numbers from runs/monitors/eval (eval A), findings/chive/report.md (eval B) and
 findings/evalc (eval C). Literature notes with URLs: this file's section 8. The affine-map O-lens trial (section 6)
@@ -18,8 +18,8 @@ was running when this was written; its result is appended at the end.
    and the text-only floor is reported but not subtracted. The three published studies that do run a text baseline
    on visible behavior (Li et al. ICML 2026; CHIVE, Karvonen et al. 2026; the MATS WorkspaceBench control) all find
    zero uplift, as we do.
-3. The most damaging explanation here is not confabulation. It is that these readouts are, by training objective,
-   predictors of the next text. In ordinary chat the next text arrives a few tokens later and the transcript judge
+3. The cause that accounts for most of the gap is the training objective: these readouts are predictors of the next
+   text. Confabulation accounts for less. In ordinary chat the next text arrives a few tokens later and the transcript judge
    reads it directly. A readout that forecasts the continuation cannot beat a reader who sees the continuation.
 4. Two further causes are specific to our setting and are not in the literature. (a) At the positions where a monitor
    is useful, the outcome is mostly undecided: a supervised probe on the full residual state scores .55, the same as
@@ -75,7 +75,7 @@ Every item below is from the source listed in section 8.
    flags as ground truth, which the paper itself calls "a potentially unreliable interpretability tool". The
    intervention results set the ceiling for a single lens direction: two-hop coordinate swaps succeed 54 to 70% of the
    time, the J-space component of a concept vector holds 6 to 7% of its variance, and heavy effects need k=10
-   ablations. A 33% drop from one keyword direction (our C6) sits inside that range.
+   ablations. A 33% drop from one keyword direction (our C6) falls inside that range.
 3. **NLA** (Fraser-Taliente et al., Anthropic, May 2026). The verbalizer is warm-started from Claude's guesses about
    web-text snippets (FineWeb, no chat) and trained by reinforcement learning on reconstruction error. The case studies
    (a planned rhyme word, a language-switching bug, eval awareness, a misreported tool call) are single transcripts
@@ -101,7 +101,7 @@ questions, and only the first was ever asked.
 
 Ordered by how much each explains our result.
 
-1. **Readouts forecast the next text** (most damaging here). Cobrin (Sept 2026; a LessWrong post that its moderators marked rejected, so a secondary data point) finds that
+1. **Readouts forecast the next text** (accounts for most of the gap). Cobrin (Sept 2026; a LessWrong post that its moderators marked rejected, so a secondary data point) finds that
    on a Gemma-3-12B NLA the "final token" paragraph carries 84% of the reconstruction signal; Zhang and Turner show an NLA trained to quote the
    last 64 tokens reaches the same reconstruction (FVE .67) as a real one; Future Lens (Pal et al. 2023) shows a
    single mid-layer state predicts tokens two or more ahead with over 48% accuracy; the tuned lens is "by construction
@@ -134,12 +134,12 @@ Ordered by how much each explains our result.
    label-selected SAE features score 0.165 of 2 on steering against 0.894 for prompting and 0.239 for a
    difference-of-means direction; Gur-Arieh et al. (ACL 2025): activation-based labels identify the steered output
    at 35 to 49% against a 33% chance; Paulo et al.: a slight negative correlation between label quality and
-   intervention effect; Riegler and Torpmann-Hagen (2026): a label names an activation regime, not a causal axis;
+   intervention effect; Riegler and Torpmann-Hagen (2026): a label names the contexts in which a feature fires rather than a causal axis;
    OmniLens (Pettyjohn et al. 2026): "the components where a behavior is most visible need not be those where
    intervention is most effective".
 7. **The model-organism lottery** (Model Organism Lottery, 2026; AuditBench, 2026): positive readout results depend
    on post-hoc fine-tuned organisms; on AuditBench, scaffolded black-box tools (58%) beat every white-box tool. Our
-   behaviors are not implanted, so the easy regime never applied.
+   behaviors are not implanted, so the setting in which readouts succeed never applied.
 
 ## 4. Explanations that are new, or sharpen the old ones
 
@@ -147,16 +147,16 @@ Ordered by how much each explains our result.
 
 The within-cut design in eval A asks a monitor to tell apart two continuations of the same prefix from the state 4
 tokens into each. The ceiling of .87 accounts for judge noise only. Every reader of the full state, including a probe
-trained on these labels, lands at .53 to .56, and so does the text. The missing .3 is not a readout failure. It is
-the share of the outcome that is decided later, by sampling. The weird turn in WeirdChat is a late, stochastic event:
+trained on these labels, lands at .53 to .56, and so does the text. The missing .3 is the share of the
+outcome that is decided later, by sampling, and no reader of the state can recover it. The weird turn in WeirdChat is a late, stochastic event:
 the measured chance of weird is .18 before a sharp fork and jumps by 50 points or more at one token. A verbalizer
 cannot report a decision the model has not made, and a transcript judge cannot either. The benchmarks in section 2
-never face this, because their targets are computed before the read position by construction.
+never face this, because their items are built so that the target is computed before the read position.
 
 Consequence: before asking whether a readout can read something, measure how much of the outcome the state at that
-position determines (a probe ceiling). If the probe ceiling is near chance, the readout question is moot. Ours was.
+position determines (a probe ceiling). If the probe ceiling is near chance, no readout can be expected to exceed it. Ours was near chance.
 
-### 4.2 The reconstruction objective is a next-text objective in disguise
+### 4.2 The reconstruction objective rewards predicting the next text
 
 The O-lens draft describes its reconstructor as predicting "the activation preceding an on-policy text span", chosen
 so the lens finds "representations associated with the model being poised to express some content". The verbalizer
@@ -165,8 +165,8 @@ model, in that state, is about to say that phrase. So the reward selects for the
 and the community result that four sampled continuations score 0.348 against 0.405 for the trained lens is the
 expected consequence. The affine-map variant makes this explicit: its carrier prompt asks for "the text that
 immediately follows this activation". In hidden-variable benchmarks the poised content is the hidden variable, which
-is why the lens looks like it reads minds there. In ordinary chat the poised content is the next sentence, which the
-transcript judge reads a moment later for free.
+is why the lens appears to recover hidden variables there. In ordinary chat the poised content is the next sentence, which the
+transcript judge reads a few tokens later.
 
 ### 4.3 A description of a state is not a description of a component
 
@@ -175,10 +175,9 @@ reads states; a neuron's output direction injected alone is not a state the mode
 readouts of the 1,000 attributed neurons single out almost none of the 100 that matter: 0 to 7% of the top-100 score
 25 or more for their behavior, and the top-100 are separated from the other 900 at AUROC .46 to .63. Yet the same
 lens registers the removal of those neurons in a real state (−0.9 on 0 to 10 against +0.1 for a random change of the
-same size, eval W4). The lens is a good thermometer and a bad map: it measures what an intervention did, and cannot
-say which intervention to make. SAE labels fail the same way for the same reason (a label describes the contexts in
+same size, eval W4). The lens measures what an intervention changed and cannot say which intervention to make. SAE labels fail the same way for the same reason (a label describes the contexts in
 which a feature fires, not what clamping it changes), and the J-lens keyword direction fails because a behavior's
-keywords are the describer's prior, not the model's mechanism. The two handles that worked were both built from the
+keywords are the describer's prior, not the model's mechanism. The two interventions that worked were both built from the
 behavior's own contrast inside the model: attribution of the fork token, and the difference of means between weird
 and normal replies.
 
@@ -191,18 +190,18 @@ The neuron set's sentence attribution, which is a counterfactual estimate, did n
 gradients through this model's gated units needed 256 to 2,048 steps to sum correctly and still did not order the
 edits. So readouts failed eval B for a structural reason, and attribution failed it for a numerical one.
 
-### 4.5 Distribution shift is real but secondary
+### 4.5 Distribution shift is present but secondary
 
 The NLA and SAE were trained on web text and reconstruct our chat states 10 to 25 points worse than their training
 data (NLA 39 to 48% of variance against 64 to 79%; SAE 59% against 70%). The O-lens was trained on this model's own
 chat replies and still gains nothing. So matching the training distribution is necessary and not sufficient; the
 causes in 4.1 to 4.3 remain.
 
-### 4.6 Which critique matters most, in one line each
+### 4.6 How much each cause explains
 
 1. Next-text forecasting (section 3.1): explains the monitoring null fully.
 2. Undecided state (4.1): explains why nothing, text included, exceeds .56.
-3. State vs component (4.3): explains the control null for every description-chosen handle.
+3. State vs component (4.3): explains the control null for every description-chosen intervention.
 4. Reader's own knowledge (3.2) and the counterfactual gap (4.4): explain the explanation null.
 5. Confabulation and distribution shift: present, but removing them would not change the three verdicts.
 
@@ -247,7 +246,7 @@ Hypotheses, written before the trial finished:
 
 Result: appended below when the trial completes.
 
-## 7. What would make readouts useful
+## 7. Changes that would make readouts useful
 
 1. **Validate labels causally.** Score a description by whether it predicts what removing or clamping the component
    does, and train explainers on that objective. Our data give a direct test: a label that could have ranked the 100
@@ -257,12 +256,12 @@ Result: appended below when the trial completes.
    the method papers did it.
 3. **Report the probe ceiling.** State how much of the target the residual state at the read position determines
    before claiming a readout can or cannot read it.
-4. **Evaluate on natural behaviors.** Implanted quirks and withheld secrets are the easy regime; the behaviors a
+4. **Evaluate on natural behaviors.** Implanted quirks and withheld secrets are the setting in which readouts succeed; the behaviors a
    deployed model actually shows are in-distribution for its own readouts.
-5. **Use readouts as instruments, not selectors.** Where a lens works in our data is measuring an intervention's
-   effect on a state (eval W4's double dissociation). Where it fails is choosing the intervention. The division of
-   labour that our results support: pick handles by contrast inside the model (attribution pools, difference-of-means
-   directions), then use the lens to describe what the handle changed.
+5. **Use readouts to measure interventions, not to choose them.** Where a lens works in our data is measuring an intervention's
+   effect on a state (eval W4's double dissociation). Where it fails is choosing the intervention. The split that our
+   results support: choose interventions by contrast inside the model (attribution pools, difference-of-means
+   directions), then use the lens to describe what the intervention changed.
 6. **Train readouts on differences.** A readout of the difference between a clean and an edited state (the NLA diffing
    line, our ablate-and-re-read) asks a question a single-state verbalizer cannot answer and is the form in which our
    lenses did show signal.
