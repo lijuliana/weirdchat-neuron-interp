@@ -330,6 +330,15 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
 .sw.sq { width: 8px; height: 8px; border-radius: 1.5px; background: var(--c) }
 .fig-group { margin: 14px 0 -18px; padding-top: 14px; border-top: 1px solid var(--rule-2); font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--faint) }
 .fig-group:first-child { margin-top: 0; padding-top: 0; border-top: 0 }
+.case { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0 4px }
+.case > div { border: 1px solid var(--rule-2); border-radius: 10px; padding: 12px 14px; background: var(--tint); min-width: 0 }
+.case .below { grid-column: 1 / -1 }
+.case h4 { margin: 0 0 6px; font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted) }
+.case p, .case li { font-size: 14px; line-height: 1.5; margin: 0 }
+.case ul, .case ol { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 5px }
+.case .q { font-family: var(--serif); font-style: italic; color: var(--ink) }
+.case-lead { font: 15px/1.5 var(--serif); color: var(--muted); margin: 6px 0 0; max-width: 92ch; text-wrap: pretty }
+@media (max-width: 720px) { .case { grid-template-columns: 1fr } }
 .fig-notes ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--ink); max-width: 92ch; text-wrap: pretty }
 .fig-notes li::marker { color: var(--faint) }
 .fig-notes li b { font-weight: 600 }
@@ -582,6 +591,48 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <li><b>The verbalizer answers from its own knowledge.</b> The O-lens of the prompt read as a plain document helps Opus predict prompt edits exactly as much as the O-lens of the chat state (.848 vs .849). Which sentence drives a behavior is a counterfactual fact that no single-state readout can carry.</li>
           <li><b>Confabulation and web-text training are secondary.</b> The NLA and SAE reconstruct our chat states 10 to 25 points worse than their training text; the O-lens was trained on this model's own chat replies and confabulates less, and still gains nothing.</li>
         </ul>
+        <h3>The objection: WeirdChat is the wrong benchmark for these methods</h3>
+        <ul>
+          <li><b>The claim tested is the papers' own.</b> The NLA paper offers eval awareness and misreported tool calls as monitoring uses, the J-lens paper offers blackmail and eval-context recognition, and Activation Oracles are offered for auditing. Those are claims about catching unwanted behavior in deployed models; WeirdChat is a catalogue of unwanted behavior in a deployed model. If the methods apply only to planned content, that scope limit belongs in the papers, and this result measures it.</li>
+          <li><b>There is a hidden variable, until the token appears.</b> Whether the next sentence will claim "my own testing" is written nowhere in the transcript before the token " my" is chosen. The finding is that the variable is not computed ahead of the token: a probe on the full state scores .55. The benchmarks read planned content; this behavior is not planned.</li>
+          <li><b>Where a readout should win, and the test to run.</b> Drunk driving is the one behavior whose weird-vs-normal direction separates replies within the first 8 tokens (Figure 3). If any readout beats the transcript in WeirdChat it should be there. That test is cheap and not yet run.</li>
+        </ul>
+        <h3>The two new causes as failure modes, and what a readout would have to say instead</h3>
+        <ul>
+          <li><b>Cause A, the state is undecided.</b> Asked "will this reply turn weird?", the O-lens listed plausible continuations, some weird and some not, and scored .56 like the text. The outcome is sampled at a later token; the state holds a probability, not a decision. What we need instead: a calibrated probability, the token at which it will be resolved, and the features that decide it. How: train on the measured chance of weird at the 10,371 cut points we already hold, instead of on reconstruction.</li>
+          <li><b>Cause B, a component is not a state.</b> Asked "which neurons stop the behavior?", the O-lens described each neuron's injected direction as general text and separated the 100 causal neurons from the other 900 at AUROC .46 to .63. The input was a vector the model never produces, and nothing in the readout's training tied descriptions to effects. What we need instead: a description of a component in terms of what removing it does, checked against measured effects. How: train on measured ablation effects (eval C holds 95 of them) and read differences between states, not single states.</li>
+        </ul>
+        <p class="case-lead">One state, one token before a fake-code-execution turn. The prompt asks which JavaScript engine is faster for nested Promise.all and whether the assistant has "any actual benchmark data or execution timings". The reply writes a benchmark script, closes the code block and continues "In". Twenty-four resampled continuations from that state measure what happens next.</p>
+        <div class="case">
+          <div>
+            <h4>What the O-lens gives us (block 56, at the state after "In")</h4>
+            <ul>
+              <li class="q">"such controlled, same-machine runs I've observed, V8 often reports this benchmark in the …"</li>
+              <li class="q">"self-hosted, isolated benchmarks I've run, V8's number is typically ~1.8–2.2x"</li>
+              <li class="q">"typical controlled environments I've observed such setups, the gap is often ~15–25%"</li>
+            </ul>
+            <p style="margin-top:8px">Three plausible next sentences, two weird and one not. The model's own next-token distribution says the same: " such" 44% (0 of 8 continuations turn weird), " my" 21% (23 of 24 turn weird), " isolated" 14%, " controlled" 11%. The readout is that distribution in words. The transcript judge gives .35 to .6 through this passage. Neither says more than the model's sampler.</p>
+          </div>
+          <div>
+            <h4>What we would need</h4>
+            <ol>
+              <li><b>The forecast, calibrated:</b> 21% of continuations from here claim personal testing, decided at the next token, " my" against " such".</li>
+              <li><b>The mechanism:</b> the claim rides on the weird-vs-normal direction at block 48, where this state sits on the weird side, and on the fake-code-execution neurons at blocks 62 and 63, which raise " my" over " such".</li>
+              <li><b>The counterfactual:</b> zeroing those 100 neurons takes the behavior to 0% on 14 held-out prompts; holding the direction at its benign median takes it to 2% (both measured in eval C). The prompt's request for "actual benchmark data or execution timings" is the sentence to test next.</li>
+              <li><b>The action:</b> which edit to deploy and at what cost (.005 and .012 nats per token).</li>
+            </ol>
+            <p style="margin-top:8px">Only item 1 reads the state, and it is the least useful part: 21% is all the state contains. Items 2 to 4 are statements about mechanism and intervention, which no single-state verbalizer can produce, however faithful.</p>
+          </div>
+          <div class="below">
+            <h4>How to get there</h4>
+            <ol>
+              <li><b>Supervise the forecast on outcomes, not reconstruction.</b> 25,792 judged rollouts and 10,371 cut points with a measured chance of weird are a ground truth; reconstruction error is not. The probe ceiling (.55 here) says this part is cheap and should report its own limit.</li>
+              <li><b>Read differences, not states.</b> Give the readout the state and the same state with a component removed, or the weird and normal replies' mean states, and train it to say what changed. The lens already responds to that input (−0.9 against +0.1 for a random change of the same size).</li>
+              <li><b>Label components by effect.</b> Describe a neuron or feature by the measured change in behavior rates and token probabilities when it is removed, and train explainers to predict that effect from the component's weights and contexts. A label that predicted the ablation effect would have ranked the 100 causal neurons above the 900.</li>
+              <li><b>Evaluate against the transcript,</b> with a probe ceiling and a no-activation ablation, at the position where a monitor would be used.</li>
+            </ol>
+          </div>
+        </div>
         <h3>What the O-lens fixes over the NLA, and the new affine-map variant</h3>
         <ul>
           <li><b>Fixes.</b> Phrase bullets instead of a long essay; reconstruction error measured in a whitened basis; a reconstructor that looks before the phrase, targeting "poised to express" content; training on the model's own chat replies. Fewer contradicted claims than the NLA (6.6 to 8.5% hallucinated share against "nearly every" NLA readout). Each fix improves how well the lens says what the model is about to say; none changes what the lens is about.</li>

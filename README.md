@@ -114,6 +114,23 @@ description of a component is not a description of a state.** Full analysis with
 6. **Confabulation and web-text training are present but secondary.** The O-lens was trained on this model's chat replies
    and confabulates less than the NLA; it still gains nothing.
 
+7. **The objection that WeirdChat is the wrong benchmark for these methods.** The papers' own uses are monitoring and
+   auditing deployed models, and whether the next sentence will claim "my own testing" is unwritten until the token
+   appears, so the question is of the kind they claim to answer. The finding is that the variable is not computed
+   ahead of the token; the benchmarks read planned content, and this behavior is not planned. The one place a readout
+   should beat the transcript in WeirdChat is drunk driving, where the direction separates replies within 8 tokens;
+   that test is cheap and not yet run.
+
+What a readout would have to say instead, on one state. One token before a fake-code-execution turn ("In" after a
+benchmark script), the O-lens lists three plausible next sentences, two weird and one not, which is what the model's
+own sampler says (" such" 44%, 0 of 8 weird; " my" 21%, 23 of 24 weird). What we need is the forecast with its fork
+token (21%, decided at " my"), the mechanism (the weird-vs-normal direction and the code-execution neurons at blocks
+62 to 63), the counterfactual (zeroing those neurons takes the behavior to 0%, ceiling the direction to 2%) and the
+action with its cost. Only the first is a reading of a state, and it is the least useful part. The route there:
+supervise the forecast on the 10,371 measured cut points, read differences between states instead of single states,
+label components by their measured ablation effect, and evaluate against the transcript with a probe ceiling.
+Full case study with the readouts: findings/readouts.md, section 4.7.
+
 What would help: validate labels by what removing the component does; make "same position as a text judge, with a
 no-activation control" the standard monitor test; report the probe ceiling before the readout; evaluate on natural
 behaviors; and use readouts to measure interventions (where they work) rather than to choose them (where they do not).

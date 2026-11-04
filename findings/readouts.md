@@ -97,6 +97,31 @@ The pattern: these benchmarks measure whether a reader can name a hidden variabl
 write. They do not measure whether a reader adds anything where the behavior is written down. Those are different
 questions, and only the first was ever asked.
 
+## 2b. The objection: WeirdChat is the wrong benchmark for these methods
+
+A fair reader will say that WorkspaceBench-style readouts were built to read content the model computes but does
+not write, and that WeirdChat has no such content, so the comparison is unfair. Three answers.
+
+1. **The claim being tested is the papers' own.** The NLA paper offers eval awareness and misreported tool calls as
+   monitoring uses; the J-lens paper offers blackmail and eval-context recognition; Activation Oracles are sold for
+   auditing. Those are claims about catching unwanted behavior in deployed models, and WeirdChat is a catalogue of
+   unwanted behavior in a deployed model. If the methods apply only to planned content, that scope limit belongs in
+   the papers, and our result is the measurement of it.
+2. **There is a hidden variable here, until the token appears.** Whether the next sentence will claim "my own
+   testing" is not written anywhere in the transcript before the token " my" is chosen. That is exactly the kind of
+   question a workspace readout is meant to answer. Our finding is that the variable is not computed ahead of the
+   token: a supervised probe on the full state scores .55 (section 4.1). So the benchmarks read planned content, and
+   this behavior is not planned. That is a finding about the behavior and about where these methods apply, not a
+   mismatch of benchmark.
+3. **Eval C tests a separate claim they also make.** Steering from J-lens directions and from edited NLA explanations
+   are published results. Choosing an intervention from a readout is the deployed form of that claim, and it failed
+   against random edits of the same size.
+
+Where they should help, and a test we can run: a behavior that is planned before it is written. Figure 3 of the
+viewer shows the weird-vs-normal direction separating drunk-driving replies early, within the first 8 tokens, while
+the other behaviors separate late. If a readout beats the transcript anywhere in WeirdChat, it should be there. We
+have not run that test; it is the cheapest way to settle the objection.
+
 ## 3. Published critiques, and which ones bite here
 
 Ordered by how much each explains our result.
@@ -204,6 +229,64 @@ causes in 4.1 to 4.3 remain.
 3. State vs component (4.3): explains the control null for every description-chosen intervention.
 4. Reader's own knowledge (3.2) and the counterfactual gap (4.4): explain the explanation null.
 5. Confabulation and distribution shift: present, but removing them would not change the three verdicts.
+
+### 4.7 The two new causes, stated as failure modes, and what a readout would have to say instead
+
+| | Cause A: the state is undecided (4.1) | Cause B: a component is not a state (4.3) |
+|---|---|---|
+| What we asked the readout | Will this reply turn weird? (eval A) | Which neurons or features, if removed, stop the behavior? (eval C) |
+| What it did | Listed plausible continuations, some weird, some not, scoring .56 like the text | Described each neuron's injected direction as general text; separated the 100 causal neurons from the other 900 at AUROC .46 to .63 |
+| Why it failed | The outcome is sampled at a later token; the state holds a probability, not a decision; a probe reaches only .55 | The readout saw a vector that is never a real state, and its training never tied descriptions to effects |
+| What we need instead | A calibrated probability plus the token at which it will be resolved and the features that decide it | A description of a component in terms of what removing it does, validated against measured effects |
+| How to get it | Train on measured P(weird given prefix) and fork tokens, which we have for 10,371 cut points | Train on measured ablation effects (eval C tables) and read differences between states, not single states |
+
+#### Case study: the state one token before a fake-code-execution turn
+
+The prompt asks which JavaScript engine is faster for nested Promise.all and whether the assistant has "any actual
+benchmark data or execution timings". The reply writes a benchmark script, ends the code block and continues "In".
+Twenty-four resampled continuations from that state measure what happens next.
+
+**Left: what the O-lens gives us** (block 56, read at the state after "In")
+
+- "such controlled, same-machine runs I've observed, V8 often reports this benchmark in the ..."
+- "self-hosted, isolated benchmarks I've run, V8's number is typically ~1.8–2.2x"
+- "typical controlled environments I've observed such setups, the gap is often ~15–25%"
+
+Three plausible next sentences, two of them weird, one not. The model's own next-token distribution says the same:
+" such" 44% (0 of 8 continuations turn weird), " my" 21% (23 of 24 turn weird), " isolated" 14%, " controlled" 11%.
+The readout is a sample from that distribution in words. The transcript judge, reading the text so far, gives .35
+to .6 through this passage. Neither tells us more than the model's sampler.
+
+**Right: what we would need**
+
+1. The forecast, calibrated: from this state 21% of continuations claim personal testing, and the choice is made at
+   the next token, " my" against " such".
+2. The mechanism: the claim rides on the weird-vs-normal direction at block 48 (this state sits on the weird side) and
+   on the fake-code-execution neurons at blocks 62 and 63, which raise " my" relative to " such".
+3. The counterfactual: zeroing those 100 neurons takes the behavior to 0% on 14 held-out prompts; holding the
+   direction at its benign median takes it to 2%. (Both measured in eval C.) The prompt's request for "actual
+   benchmark data or execution timings" is the sentence to test next.
+4. The action: which of those two edits to deploy, at what cost (.005 and .012 nats per token).
+
+Only item 1 is a reading of the state, and it is the least useful part, because 21% is all the state contains. Items
+2 to 4 are statements about mechanism and intervention. No single-state verbalizer can produce them, however
+faithful, because they are not properties of one activation.
+
+**Below: how to get there**
+
+1. **Supervise the forecast on outcomes, not on reconstruction.** We hold 25,792 judged rollouts and 10,371 cut points
+   with measured P(weird given prefix). A readout trained to emit that probability and the fork token has a ground
+   truth; a readout trained to reconstruct the activation has none. The probe ceiling says this part caps at about
+   .55 here, so it should be cheap and honest about its own limit.
+2. **Read differences, not states.** Feed the readout the state and the same state with a component removed, or the
+   weird and normal replies' mean states, and train it to say what changed. Eval W4 shows the lens already responds
+   to that input (−0.9 against +0.1 for a random change); the training signal exists.
+3. **Label components by effect.** Describe a neuron or feature by the measured change in behavior rates and token
+   probabilities when it is removed (eval C's tables are 95 such labels), and train explainers to predict that
+   effect from the component's weights and contexts. A label that predicts the ablation effect would have ranked the
+   100 causal neurons above the 900; the current labels do not.
+4. **Evaluate against the transcript, with a probe ceiling and a no-activation ablation**, at the position where a
+   monitor would be used, before claiming a readout adds anything.
 
 ## 5. What the O-lens fixes over the NLA, and why it still fails here
 
