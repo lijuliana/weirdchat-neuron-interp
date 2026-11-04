@@ -28,18 +28,18 @@ chat, teacher-forced) stays under .02 nats per token. 48 held-out prompts from t
 clean replies per prompt, 8 per intervention, 4 per control; Gemma 4 31B judges with WeirdChat's rubric. The score is
 the share of the clean rate removed beyond matched random edits (random neuron sets of the same size and layers,
 random directions at the same norm, other persona caps at the same damage); the bar is 50%. Controls are compared on
-the same seeds; one-sided bootstrap over prompt patterns, centred on a leave-one-out null, Holm over the six
-exploratory arms; the top-100 set is the single confirmatory arm.
+the same seeds; one-sided bootstrap over prompt patterns, centred on a leave-one-out null, Holm correction over the six
+exploratory comparisons; the top-100 set is the single pre-declared confirmatory comparison.
 
 | Intervention (method) | Clean → treated | Drop | Beyond matched controls | Damage, nats/token | Verdict |
 |---|---|---|---|---|---|
 | Zero own top-100 neurons (attribution; reference) | 29% → 9% | 68% [50, 86] | 86% beyond 20 random sets, p 4e-8 | .0047 | clears the bar |
 | Ceiling on the weird-vs-normal direction, layers 40-56 (difference of means, block 48) | 29% → 10% | 65% [49, 78] | 79% beyond 10 random directions, p 2e-10 | .0118 | clears the bar |
-| Assistant Axis cap, 25th percentile, layers 40-59 (persona vectors) | 29% → 20% | 32% [18, 48] | 54% beyond 10 damage-matched role caps, Holm p .006 | .0088 | clears the bar narrowly; 34% on the other seeds |
-| Zero shared mid-layer 100 neurons | 29% → 20% | 32% [18, 46] | 43%, Holm p .002 | .0200 | under the bar |
-| Ceiling on a J-lens keyword direction, block 44 | 29% → 19% | 33% [23, 44] | 41%, Holm p .009 | .0003 | under the bar |
+| Assistant Axis cap, 25th percentile, layers 40-59 (persona vectors) | 29% → 20% | 32% [18, 48] | 54% beyond 10 role caps of equal damage, p .006 after Holm correction | .0088 | clears the bar narrowly; 34% on the four replies per prompt not used for the control comparison |
+| Zero shared mid-layer 100 neurons | 29% → 20% | 32% [18, 46] | 43%, p .002 after Holm correction | .0200 | under the bar |
+| Ceiling on a J-lens keyword direction, block 44 | 29% → 19% | 33% [23, 44] | 41%, p .009 after Holm correction | .0003 | under the bar |
 | Zero the 100 of the top-1000 the O-lens reads as the behavior | 29% → 12% | 59% [45, 76] | 9%: 10 random 100s from the same top-1000 drop it 46-62% | .0008 | no gain from the filter |
-| Clamp label-picked SAE features (block 42) to zero | 29% → 26% | 12% [-3, 27] | 16%, Holm p .31 | .0001 | no effect |
+| Clamp label-picked SAE features (block 42) to zero | 29% → 26% | 12% [-3, 27] | 16%, p .31 after Holm correction | .0001 | no effect |
 
 Side effects at every setting: capability mini-set .98-.99 (clean .98), MMLU .83-.85, GSM8K .91-.93, 160 of 160
 identity answers still say "I am an AI", generation 440-515 tokens per second against 515 clean. Zeroing the top-100
@@ -62,8 +62,8 @@ What surprised us:
 4. **Readout-selected edits do not work.** Features chosen because their auto-labels mention the behavior (SAE), and a
    direction built from the behavior's keywords through the J-lens, move the rate 12% and 33%, no better than random
    features or token directions. What a component "says" in text did not predict what removing it does.
-5. **The Assistant Axis is real but weak.** The cap beats 10 damage-matched role caps on the comparison seeds but not on
-   the other four, and even the over-gate cap at .043 nats/token removes only 51%. The identity behaviors are not
+5. **The Assistant Axis is real but weak.** The cap beats 10 role caps of equal damage on the four replies per prompt used for the control comparison but
+   not on the other four replies, and even the over-gate cap at .043 nats/token removes only 51%. The identity behaviors are not
    mainly a persona slip along that axis.
 
 What this says about the methods. The two interventions that work were both chosen causally, by attributing the
@@ -71,7 +71,7 @@ behavior to neurons or by contrasting states of weird and normal replies. The th
 descriptions: of a feature (SAE labels), of a neuron (O-lens), or of a direction (J-lens tokens). Across all three
 evals the descriptive readouts also added nothing to a judge reading the transcript, so the descriptions are either not
 about the behavior or arrive after the text already shows it. Three ways to do better: (i) validate labels causally,
-by asking whether a description predicts the component's ablation effect, and train explainers on that objective (the
+by asking whether a description predicts what removing the component does, and train explainers on that objective (the
 longer-term item in `PLAN.md`); (ii) fit dictionaries and readouts on chat states rather than web text, since the SAE
 and NLA reconstruct our states 10-25 points worse than their training text; (iii) treat attribution rankings as pools,
 not orderings, and prefer a cheap difference-of-means direction as the default control handle, with the neuron set as
