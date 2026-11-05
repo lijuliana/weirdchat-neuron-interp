@@ -52,9 +52,11 @@ Results that differ from what we expected:
    weird and normal replies, fit on discovery prompts, controls all four behaviors with 8 or more held-out prompts,
    including denying AI (55% drop), where the behavior's own top-100 set does nothing (−10%). The direction also raises
    refusals less (4% vs 7%). On three of the four behaviors the set and the direction land within a few points.
-2. **Attribution finds the right 1,000 neurons, not the right 100.** Random 100-neuron draws from Agastya's top 1,000
-   drop the behaviors 46-62% on their own, at a tenth of the damage. The O-lens filter picks neurons that read as the
-   behavior and adds nothing beyond that. So the top-100 set's large margin over random sets is mostly a margin over
+2. **A random 100 of the attribution's top 1,000 may be the better edit.** Random 100-neuron draws from Agastya's top
+   1,000 drop the behaviors 46-62% on their own, at a quarter of the ranked top-100 set's damage (.0013 against .0047
+   nats per token on benign text). The ranked set's extra 6 to 22 points of removal cost four times the damage, and
+   zeroing the whole top 1,000 removes 93% at .0215. The O-lens filter picks neurons that read as the behavior and
+   adds nothing beyond a random draw (59%). So the top-100 set's large margin over random sets is mostly a margin over
    neurons outside the attribution's pool; against draws from inside the pool it would be about 22%.
 3. **The neuron sets work only on their own behavior, and not always then.** Zeroing the code-execution set takes fake code execution
    to 0% on 14 new prompts, and the 911 set takes 911 to 0%, yet the denying-AI set leaves denying AI untouched. The
