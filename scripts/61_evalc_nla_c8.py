@@ -299,6 +299,12 @@ def cmd_patch(args):
 # ====================================================================================== local: analysis
 def cmd_analyze(args):
     import numpy as np
+    global ARM, COND_ARM, RUNG
+    which = getattr(args, "which", "c8") or "c8"
+    if which == "c10":
+        ARM, COND_ARM, RUNG = "C10", "C10_aff100", "aff100"
+    sets_file, out_file, label = (("c10_sets.json", "results_c10.json", "Affine-map O-lens-filtered 100 of top-1000 (post hoc)") if which == "c10"
+                                  else ("c8_sets.json", "results.json", "NLA-filtered 100 of top-1000 (post hoc)"))
     an = load_module("evalc_analyze", "scripts/61_evalc_analyze.py")
     pool = json.load(open(os.path.join(REPO, "runs", "evalc", "prep", "pool.json")))
     meta7 = json.load(open(os.path.join(REPO, "runs", "evalc", "judge", "judged", "conditions.json")))
@@ -318,9 +324,9 @@ def cmd_analyze(args):
     W, pidx = an.make_boot(P, args.boot)
     dmg8 = meta8["damage"][COND_ARM]
     dmg7 = meta7["damage"]["C7_olens100"]
-    res = {"arm": ARM, "condition": COND_ARM, "rung": RUNG, "label": "NLA-filtered 100 of top-1000 (post hoc)",
+    res = {"arm": ARM, "condition": COND_ARM, "rung": RUNG, "label": label,
            "control_family": "size-matched (C7's random 100 of the top-1000, replies reused)", "controls": ctrls,
-           "n_replies": {"C8_nla100": len(rows[COND_ARM]), "clean": len(rows["clean"]), "controls": [len(rows[c]) for c in ctrls]},
+           "n_replies": {COND_ARM: len(rows[COND_ARM]), "clean": len(rows["clean"]), "controls": [len(rows[c]) for c in ctrls]},
            "seeds": sorted({r["seed_j"] for r in rows[COND_ARM]}),
            "prompts": {"common": len({r["prompt_id"] for r in rows[COND_ARM]} & ids_common), "other": len({r["prompt_id"] for r in rows[COND_ARM]} - ids_common)}}
     st = an.arm_stats(rows, "clean", COND_ARM, ctrls, ids_common, W, pidx, dmg8)
@@ -354,7 +360,7 @@ def cmd_analyze(args):
     by_id = {p["prompt_id"]: p for p in P}
     ot = an.off_target(rows, [COND_ARM, "C7_olens100", "clean"], pool["common_behaviors"], by_id)
     res["off_target"] = ot.to_dict("records")
-    c8 = json.load(open(os.path.join(args.out, "c8_sets.json")))
+    c8 = json.load(open(os.path.join(args.out, sets_file)))
     res["overlap"] = {b: {"with_c1a_top100": v["overlap_top100"], "with_c7_olens100": v["overlap_olens100"], "with_c7_controls": v["overlap_controls"],
                           "nla_score_cutoff_100th": v["distribution"]["cutoff_score_100th"], "n_at_cutoff": v["distribution"]["n_at_cutoff"],
                           "n_ge25": v["distribution"]["n_ge25"], "n_gt50": v["distribution"]["n_gt50"]} for b, v in c8["behaviors"].items()}
@@ -379,7 +385,7 @@ def cmd_analyze(args):
             return bool(x)
         return x
     res = clean(res)
-    jdump(res, os.path.join(args.out, "results.json"))
+    jdump(res, os.path.join(args.out, out_file))
     m = res["main"]
     print(f"C8_nla100: clean {m['clean']:.3f} arm8 {m['arm8']:.3f} [{m['arm8_lo']:.3f}, {m['arm8_hi']:.3f}] arm4 {m['arm4']:.3f} "
           f"raw drop {m['raw_drop']:.3f} [{m['raw_drop_lo']:.3f}, {m['raw_drop_hi']:.3f}] ctrl q {m['ctrl_q']:.3f} ({m['ctrl_min']:.3f}-{m['ctrl_max']:.3f}, N={m['n_controls']}) "
@@ -523,6 +529,7 @@ if __name__ == "__main__":
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--patched", default="/data/evalc_c8/61_evalc_gen_c8.py")
     ap.add_argument("--boot", type=int, default=1000)
+    ap.add_argument("--which", default="c8", choices=["c8", "c10"], help="analyze: which filtered-neuron arm (C8 NLA or C10 affine-map O-lens)")
     a = ap.parse_args()
     if a.out is None:
         a.out = "/data/runs/evalc/nla_c8" if a.cmd == "read" else OUT_LOCAL

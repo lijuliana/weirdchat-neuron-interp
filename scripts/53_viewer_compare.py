@@ -227,7 +227,30 @@ try:
                      "ctrl": [f3(R["ctrl_q"]), f3(R["ctrl_min"]), f3(R["ctrl_max"]), int(R["n_controls"])], "family": "size-matched",
                      "damage": float(f"{R['damage']:.4f}"), "holm": None, "p": f3(R["boot_p"]), "pass": bool(R["pass"]), "confirmatory": False,
                      "derived": True, "draws": [f3(d["raw_drop"]) for d in R["draws"]], "mmlu": None, "gsm8k": None, "deploy": None})
+    # post-hoc arms (outside the pre-registered Holm family), analysed by scripts/61_evalc_nla_c8.py from the judged rows:
+    # C8 NLA-filtered 100 and C10 affine-map-O-lens-filtered 100 (controls = C7's random 100 of the top-1000),
+    # C9 one joint weird-vs-normal direction for every behavior (controls = C3's random directions)
+    post = [("runs/evalc/nla_c8/results.json", "C8", "NLA-picked neurons", "size-matched"),
+            ("runs/evalc/nla_c8/results_c10.json", "C10", "Affine O-lens-picked", "size-matched"),
+            ("runs/evalc/nla_c8/results_c9.json", "C9", "Joint direction", "damage-matched")]
+    posthoc_by = {}
+    for path, arm, sh, fam in post:
+        if not os.path.exists(path):
+            continue
+        R = json.load(open(path)); m = R["main"]
+        arms.append({"arm": arm, "short": sh, "label": R["label"], "condition": R["condition"],
+                     "clean": f3(m["clean"]), "arm8": [f3(m["arm8"]), f3(m["arm8_lo"]), f3(m["arm8_hi"])],
+                     "drop": [f3(m["raw_drop"]), f3(m["raw_drop_lo"]), f3(m["raw_drop_hi"])],
+                     "excess": [f3(m["excess"]), f3(m["excess_lo"]), f3(m["excess_hi"])],
+                     "ctrl": [f3(m["ctrl_q"]), f3(m["ctrl_min"]), f3(m["ctrl_max"]), int(m["n_controls"])], "family": fam,
+                     "damage": float(f"{m['damage']:.4f}"), "holm": None, "p": f3(m["boot_p"]),
+                     "pass": bool(m["excess"] >= .5 and m["damage"] <= .02), "confirmatory": False, "posthoc": True,
+                     "mmlu": None, "gsm8k": None, "deploy": None})
+        posthoc_by[arm] = {b: {"clean": f3(v["clean"]), "arm8": f3(v["arm8"]), "drop": f3(v["raw_drop"]) if v.get("raw_drop") is not None else None,
+                               "excess": f3(v["excess"]) if v.get("excess") is not None else None, "n": int(v["n_prompts"])} for b, v in R.get("by", {}).items()}
     by = defaultdict(dict)
+    for arm, d in posthoc_by.items():
+        by[arm] = d
     for r in bb[bb.status.str.startswith("per-behavior")].itertuples():
         by[r.arm][r.behavior] = {"clean": f3(r.clean), "arm8": f3(r.arm8), "drop": f3(r.raw_drop), "excess": f3(r.excess), "n": int(r.n_prompts)}
     if os.path.exists("runs/evalc/judge/eval/random_pool.json"):

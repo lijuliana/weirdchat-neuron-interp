@@ -886,13 +886,13 @@ function barFig(id, groups, o) {
 
 function figEvalC() {
   const E = CMP.evalc; if (!E) return;
-  const order = ['C1a', 'R', 'C3', 'C2', 'C6', 'C1b', 'C5', 'C7'], A = Object.fromEntries(E.arms.map(a => [a.arm, a]));
+  const order = ['C1a', 'R', 'C3', 'C9', 'C2', 'C6', 'C1b', 'C5', 'C7', 'C10', 'C8'], A = Object.fromEntries(E.arms.map(a => [a.arm, a]));
   const clip = v => v.map(x => Math.max(0, Math.min(1.05, x)));
   const groups = order.filter(k => A[k]).map(k => {
-    const a = A[k], fam = a.family === 'size-matched' ? 'random sets of the same size and layers' : a.arm === 'C2' ? 'damage-matched role caps' : 'random directions at the same norm';
+    const a = A[k], fam = (a.arm === 'C7' || a.arm === 'C8' || a.arm === 'C10') ? 'random 100-neuron draws from the same top-1,000' : a.family === 'size-matched' ? 'random sets of the same size and layers' : a.arm === 'C2' ? 'damage-matched role caps' : 'random directions at the same norm';
     return { lab: a.short, short: a.short.replace(' direction', ' dir.').replace(' neurons', ''), bars: [
       { v: clip(a.drop), c: '--hot', op: a.derived ? 0.5 : undefined, title: `${a.short}: rate ${pct(a.clean)} → ${pct(a.arm8[0])}, a ${pct(a.drop[0])} drop [${pct(a.drop[1])}, ${pct(a.drop[2])}]; damage ${a.damage} nats/token${a.derived ? ` (pooled over ${a.draws.length} draws, single draws ${pct(Math.min(...a.draws))}–${pct(Math.max(...a.draws))}; derived row, not a pre-registered arm)` : ''}` },
-      { v: clip(a.excess), c: '--accent', op: a.derived ? 0.5 : undefined, title: `${a.short}: ${pct(a.excess[0])} of the clean rate beyond ${a.ctrl[3]} ${fam} (worst control ${pct(a.ctrl[0])}, range ${pct(a.ctrl[1])}–${pct(a.ctrl[2])}); ${a.pass ? 'clears' : 'under'} the 50% bar${a.holm != null ? `, Holm p ${a.holm}` : a.confirmatory ? ', confirmatory arm' : ''}` }] };
+      { v: clip(a.excess), c: '--accent', op: a.derived ? 0.5 : undefined, title: `${a.short}: ${pct(a.excess[0])} of the clean rate beyond ${a.ctrl[3]} ${fam} (worst control ${pct(a.ctrl[0])}, range ${pct(a.ctrl[1])}–${pct(a.ctrl[2])}); ${a.pass ? 'clears' : 'under'} the 50% bar${a.holm != null ? `, Holm p ${a.holm}` : a.confirmatory ? ', confirmatory arm' : a.posthoc ? `, post hoc (outside the pre-registered family), centred p ${a.p}` : ''}` }] };
   });
   barFig('fig-evalc', groups, { ymax: 1.05, ticks: [0, 0.25, 0.5, 0.75, 1], h: 230, ref: E.bar });
 }
