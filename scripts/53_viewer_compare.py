@@ -280,7 +280,10 @@ try:
               "transfer": {a: {b: f3(v) for b, v in row.items()} for a, row in TR["transfer"].items()}, "cv_diag": {b: f3(v) for b, v in TR["cv_diag"].items()},
               "lobo": {b: {"auroc": f3(v["auroc"]), "null95": f3(v["null95"]), "cos_own": f3(v["cos_own"]), "pairs": int(v["pairs"])} for b, v in TR["lobo"].items()},
               "cos": {a: {b: f3(v) for b, v in row.items()} for a, row in TR["cos"].items()}, "cos_null95": {a: {b: f3(v) for b, v in row.items()} for a, row in TR["cos_null95"].items()},
-              "cos_axis": {b: {"cos": f3(v["cos_axis"]), "null95": f3(v["null95"])} for b, v in TR["cos_axis"].items()}}
+              "cos_axis": {b: {"cos": f3(v["cos_axis"]), "null95": f3(v["null95"])} for b, v in TR["cos_axis"].items()},
+              "joint": None if "joint" not in TR else {"all11_cv": {b: f3(v["auroc"]) for b, v in TR["joint"]["all11_cv"].items()},
+                                                       "four_cv": {b: f3(v["auroc"]) for b, v in TR["joint"]["four_cv"].items()},
+                                                       "four_behaviors": TR["joint"]["four_behaviors"], "cos_four_with_own": {b: f3(v) for b, v in TR["joint"]["cos_four_with_own"].items()}}}
 except FileNotFoundError as e:
     print("dirs11: skipped,", e)
 

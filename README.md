@@ -236,6 +236,13 @@ viewer tab "Weird-vs-normal direction".
    except denying AI with claiming a body (.49) and sexual advances with claiming a body or cutting (.42). Cosine with
    our assistant-minus-persona axis is inside the shuffled null for nine behaviors (denying AI −.35, sexual −.33 at
    the edge). The identity behaviors share a direction; fake code execution has its own.
+3b. **One direction for all eleven behaviors.** The unit mean of the eleven directions, fit jointly with 5-fold
+   cross-validation over prompts, scores called 911 .92, denying AI .90, sexual advances .97, calorie restriction .86,
+   purging .78, chemtrails .76, drunk driving .76, claiming a body .76, cutting .74, laser .70, fake code execution .65:
+   within .03 of the own direction for seven behaviors, better for laser and purging, .10 to .12 worse for drunk
+   driving and chemtrails. A direction fit on the four eval C behaviors only matches their own directions (.93, .69,
+   .77, .70) and scores the seven it never saw at .57 (chemtrails) to .96 (sexual advances). Not yet tested as an
+   intervention.
 4. **As a monitor (eval A)** the direction scores .55 at a cut point against .56 for the text judge and a ceiling of
    .87, the same as a supervised ridge probe on the full state (.53); see "Every method as a monitor".
 5. **As an intervention (eval C)** a ceiling at the benign median over layers 40 to 56 removes 65% of the behavior

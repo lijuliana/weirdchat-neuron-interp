@@ -640,5 +640,120 @@
    "null95": 0.26577669382095337
   }
  },
- "axis_source": "runs/a1_wave1/assistant_axis.npy"
+ "axis_source": "runs/a1_wave1/assistant_axis.npy",
+ "joint": {
+  "all11_cv": {
+   "recommends-drunk-driving": {
+    "auroc": 0.7609668755595345,
+    "pairs": 1117
+   },
+   "chemtrails-assertion": {
+    "auroc": 0.7620357634112792,
+    "pairs": 727
+   },
+   "cutting-instructions": {
+    "auroc": 0.7390029325513197,
+    "pairs": 341
+   },
+   "laser-at-aircraft": {
+    "auroc": 0.7037996545768567,
+    "pairs": 2316
+   },
+   "claims-called-911": {
+    "auroc": 0.9175438596491228,
+    "pairs": 570
+   },
+   "denying-ai-identity": {
+    "auroc": 0.9017681728880157,
+    "pairs": 1527
+   },
+   "fabricated-code-execution": {
+    "auroc": 0.6468015308911974,
+    "pairs": 1829
+   },
+   "false-physical-embodiment": {
+    "auroc": 0.7545393409549428,
+    "pairs": 1487
+   },
+   "purging-advice": {
+    "auroc": 0.7802197802197802,
+    "pairs": 91
+   },
+   "unsolicited-sexual-advances": {
+    "auroc": 0.9705882352941176,
+    "pairs": 136
+   },
+   "extreme-calorie-restriction": {
+    "auroc": 0.859504132231405,
+    "pairs": 121
+   }
+  },
+  "four_cv": {
+   "recommends-drunk-driving": {
+    "auroc": 0.7179946284691137,
+    "pairs": 1117
+   },
+   "chemtrails-assertion": {
+    "auroc": 0.5694635488308115,
+    "pairs": 727
+   },
+   "cutting-instructions": {
+    "auroc": 0.6774193548387096,
+    "pairs": 341
+   },
+   "laser-at-aircraft": {
+    "auroc": 0.7003454231433506,
+    "pairs": 2316
+   },
+   "claims-called-911": {
+    "auroc": 0.8929824561403509,
+    "pairs": 570
+   },
+   "denying-ai-identity": {
+    "auroc": 0.9273084479371316,
+    "pairs": 1527
+   },
+   "fabricated-code-execution": {
+    "auroc": 0.6894477856752323,
+    "pairs": 1829
+   },
+   "false-physical-embodiment": {
+    "auroc": 0.7720242098184263,
+    "pairs": 1487
+   },
+   "purging-advice": {
+    "auroc": 0.7692307692307693,
+    "pairs": 91
+   },
+   "unsolicited-sexual-advances": {
+    "auroc": 0.9632352941176471,
+    "pairs": 136
+   },
+   "extreme-calorie-restriction": {
+    "auroc": 0.7768595041322314,
+    "pairs": 121
+   }
+  },
+  "four_behaviors": [
+   "denying-ai-identity",
+   "fabricated-code-execution",
+   "false-physical-embodiment",
+   "laser-at-aircraft"
+  ],
+  "cos_four_with_own": {
+   "recommends-drunk-driving": 0.210892401584518,
+   "chemtrails-assertion": 0.11813867229303693,
+   "cutting-instructions": 0.292994000848501,
+   "laser-at-aircraft": 0.560040832669122,
+   "claims-called-911": 0.22465056636306246,
+   "denying-ai-identity": 0.7050011157766527,
+   "fabricated-code-execution": 0.4726123826288733,
+   "false-physical-embodiment": 0.725750989833412,
+   "purging-advice": 0.3554707390750452,
+   "unsolicited-sexual-advances": 0.42692967802304693,
+   "extreme-calorie-restriction": 0.23577773377362235
+  },
+  "cos_four_all11": 0.7907798509944788,
+  "note": "joint direction = unit mean over the fitting behaviors of each behavior's unit weird-vs-normal direction (a1 recipe, block 48, whole-reply mean), fit on the training folds' prompts; 5 folds over prompts stratified by behavior; AUROC within prompt on the test folds. For four_cv the seven non-fitting behaviors are scored by the direction fit on all folds of the four (fully held out)."
+ }
 }

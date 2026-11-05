@@ -1007,25 +1007,27 @@ const heatCell = (x, y, w, h, v, title, showText, border) => {  // AUROC cell: b
 function figDirOwn() {
   const id = 'fig-dir-own', D = CMP.dirs11;
   if (!D) { $(id).closest('figure').hidden = true; return; }
-  const W = figW(id), narrow = W < 560;
-  const labW = narrow ? 112 : 150, numW = narrow ? 0 : 70, x0 = labW + 8, x1 = W - numW - 8, rh = 24, top = 24;
+  const W = figW(id), narrow = W < 560, J = D.joint;
+  const labW = narrow ? 112 : 150, numW = narrow ? 0 : 70, x0 = labW + 8, x1 = W - numW - 8, rh = 26, top = 24;
   const lo = 0.4, hi = 1.0, x = v => x0 + (x1 - x0) * (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo);
   const order = D.behaviors.slice().sort((a, b) => (D.own[b].cv ?? 0) - (D.own[a].cv ?? 0));
   const bot = top + order.length * rh;
   let g = '';
   for (const t of [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]) g += ln(x(t), top, x(t), bot + 4, t === 0.5 ? '--faint' : '--rule', t === 0.5 ? '' : 'stroke-dasharray="2 4"') + tx(x(t), bot + 18, t.toFixed(1), '', 'middle');
   order.forEach((b, k) => {
-    const yc = top + k * rh + rh / 2, o = D.own[b], L = D.lobo[b];
+    const yc = top + k * rh + rh / 2, o = D.own[b], L = D.lobo[b], four = J && J.four_behaviors.includes(b);
     g += tx(0, yc + 4, DL[b] || b, 'lab');
-    if (o.cv_shuf95 != null) g += ln(x(o.cv_shuf95), yc - 6, x(o.cv_shuf95), yc + 6, '--faint', 'stroke-width="2"');
-    if (L) g += dot(x(L.auroc), yc + 5, '--accent', `${DL[b]}: direction pooled from the other ten behaviors, AUROC ${L.auroc.toFixed(2)} (label-shuffle 95th percentile ${L.null95.toFixed(2)}; cosine with the own direction ${L.cos_own.toFixed(2)})`);
-    if (o.split != null) g += dot(x(o.split), yc - 5, '--ok', `${DL[b]}: own direction fit on discovery prompts, tested on held-out prompts: AUROC ${o.split.toFixed(2)} over ${o.split_pairs} pairs`, 'square', true);
-    if (o.cv != null) g += dot(x(o.cv), yc - 5, '--ok', `${DL[b]}: own direction, 5-fold cross-validation over prompts: AUROC ${o.cv.toFixed(2)} over ${o.cv_pairs} pairs (label-shuffle 95th percentile ${o.cv_shuf95}, random-direction 95th percentile ${o.cv_rand95})`);
+    if (o.cv_shuf95 != null) g += ln(x(o.cv_shuf95), yc - 7, x(o.cv_shuf95), yc + 7, '--faint', 'stroke-width="2"');
+    if (J) g += dot(x(J.all11_cv[b]), yc + 6, '--ink', `${DL[b]}: one direction fit on all eleven behaviors (5-fold cross-validation over prompts), AUROC ${J.all11_cv[b].toFixed(2)}`, 'square');
+    if (J) g += dot(x(J.four_cv[b]), yc + 6, '--hot', `${DL[b]}: direction fit on the four eval C behaviors (denying AI, fake code execution, claiming a body, laser)${four ? ', cross-validated over prompts' : '; this behavior was not used in the fit'}: AUROC ${J.four_cv[b].toFixed(2)}`, 'circle', !four);
+    if (L) g += dot(x(L.auroc), yc - 6, '--accent', `${DL[b]}: direction pooled from the other ten behaviors, AUROC ${L.auroc.toFixed(2)} (label-shuffle 95th percentile ${L.null95.toFixed(2)}; cosine with the own direction ${L.cos_own.toFixed(2)})`);
+    if (o.cv != null) g += dot(x(o.cv), yc - 6, '--ok', `${DL[b]}: own direction, 5-fold cross-validation over prompts: AUROC ${o.cv.toFixed(2)} over ${o.cv_pairs} pairs (held-out split ${o.split ?? 'n/a'}; label-shuffle 95th percentile ${o.cv_shuf95}, random-direction 95th percentile ${o.cv_rand95})`);
     if (!narrow) g += tx(W - 2, yc + 4, `${D.n_prompts[b]} prompts`, 'n', 'end');
   });
   g += tx((x0 + x1) / 2, bot + 36, 'Within-prompt AUROC: share of (weird, normal) reply pairs to the same prompt where the weird reply scores higher (0.5 = chance)', 'axt', 'middle');
   setSVG(id, W, bot + 44, g);
 }
+
 function figDirTransfer() {
   const id = 'fig-dir-transfer', D = CMP.dirs11;
   if (!D) { $(id).closest('figure').hidden = true; return; }
