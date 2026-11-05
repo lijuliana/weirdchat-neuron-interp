@@ -96,6 +96,29 @@ The pattern: these benchmarks measure whether a reader can name a hidden variabl
 write. They do not measure whether a reader adds anything where the behavior is written down. Those are different
 questions, and only the first was ever asked.
 
+## 2a. The experiments in which the methods succeeded, and what they share
+
+1. Activation Oracles (Karvonen et al.): Gemma-2-9B fine-tuned to hide a Taboo word, oracle names it from one
+   activation in 21% of games against 4% for the best prior white-box method; a base64-encoded side constraint on
+   Llama-70B recovered 59% (52% white-box; black-box prefill does better); a user's gender the model was trained to
+   deny, up to 99.5%. LatentQA (Pan et al.): a hidden system prompt recovered in 92% of hard cases, 19 points above
+   GPT-4 guessing from the reply.
+2. The NLA paper (Fraser-Taliente et al.): on a poem, the explanation names the rhyme word "rabbit" a line before it
+   is written; steering from an edited explanation changes the rhyme in about half of samples. Single transcripts of
+   a language-switching bug, eval awareness and a misreported tool call, chosen by the authors from an internal audit.
+3. The J-lens paper (Gurnee et al.): arithmetic intermediates (21, 42, 49) and two-hop bridge entities read from
+   mid-depth states; swapping one J-lens coordinate changes the answer in 54 to 70% of prompts; "secretly" and
+   "trick" surfaced in two model organisms where the logit lens shows nothing.
+4. WorkspaceBench (Blank et al.): 3,356 items in 27 families, target "logically inferable from the prompt but never
+   stated"; the O-lens scores .74 under an Opus judge; four sampled continuations of the model score .35 against .41
+   for the trained lens under a Sonnet judge.
+5. Shared properties: the target is computed before the read position and withheld from the text (by training, by
+   item construction or by the task); an item passes if any layer at any position names it; the comparison is with
+   other readers or a prompt-only guesser, never with a judge reading the transcript at the same position; the
+   text-only floor, where reported, is not subtracted. Each property fails to hold on WeirdChat: the behavior is
+   written in the transcript, it is not computed ahead of the token (section 4.1), the read position is fixed, and
+   the comparison is with a transcript judge.
+
 ## 2b. The objection: WeirdChat is the wrong benchmark for these methods
 
 A fair reader will say that WorkspaceBench-style readouts were built to read content the model computes but does
@@ -286,6 +309,24 @@ faithful, because they are not properties of one activation.
    100 causal neurons above the 900; the current labels do not.
 4. **Evaluate against the transcript, with a probe ceiling and a no-activation ablation**, at the position where a
    monitor would be used, before claiming a readout adds anything.
+
+### 4.8 Is this a new failure mode?
+
+1. The failure modes the readout literature names: confabulation (claims contradicted by the context; Zhang and
+   Turner; WorkspaceBench), vagueness (49% generic answers; aryaj, Rajamanoharan and Nanda), text inversion (the
+   oracle reconstructs the surrounding text and answers from it; Li et al.; AObench), and labels that do not predict
+   steering (AxBench; Gur-Arieh et al.).
+2. None of them applies to cause A. At the case-study state the O-lens's three continuations match the model's own
+   next-token distribution; the affine lens, with the fewest false claims of the four lenses (6.6%), scores the same
+   as the others. The readout is accurate and useless because the block-48 state holds a probability (21%) and the
+   outcome is drawn at a later token. The nearest prior observation, oracles at chance where text inversion cannot
+   help (aryaj et al.), reports the chance-level score without a probe ceiling. A faithful readout of an undecided
+   state is, to our knowledge, a failure mode not previously named or measured; the probe ceiling is its test.
+3. Cause B sharpens a known one. That auto-labels do not predict steering is known (AxBench: label-picked SAE features
+   0.17 of 2 against 0.89 for prompting). The new element is the dissociation inside one lens: the same O-lens that
+   cannot recognise the causal neurons from their output directions (AUROC .46 to .63) registers their ablation in a
+   real state (−0.9 against +0.1). The readout works as an instrument for measuring an edit and fails as a selector
+   of edits.
 
 ## 5. What the O-lens fixes over the NLA, and why it still fails here
 

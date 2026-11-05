@@ -92,43 +92,66 @@ pandas keyword clash; the CSVs are correct and the numbers above come from them.
 
 ### Why reading the transcript beats the readout methods
 
-**The readout methods (NLA, O-lens, J-lens family, SAE labels) failed all three tests, and the reason is structural:
-by training objective they forecast the next text, which the transcript shows a few tokens later. Two further causes are
-specific to this setting: at the positions where a monitor would help, the state has not decided yet, and a
-description of a component is not a description of a state.** Full analysis with the literature:
-[findings/readouts.md](findings/readouts.md).
+**The J-lens, NLA, O-lens and SAE labels were built and benchmarked for reading a variable the model computed but did
+not write (a secret word, a planned rhyme, a multi-hop bridge). Explaining why a transcript turned out the way it did
+and which component to edit is a different task, and on it a judge reading the transcript beat all four on every test:
+warning before the weird turn (eval A), predicting which prompt edits matter (eval B) and choosing an edit (eval C).
+Five causes, ordered by weight: the NLA and O-lens are trained to predict the next text, which the transcript contains;
+at the position where a monitor would act the block-48 state does not yet determine the outcome (supervised probe .55,
+ceiling .87); a readout of a neuron's output direction says nothing about what ablating the neuron does; the Opus
+reader uses its own knowledge, not the activation; confabulation and web-text training are present but removing them
+changes nothing.** Full analysis with sources: [findings/readouts.md](findings/readouts.md); viewer tab "Why reading
+the transcript beats the readout methods".
 
-1. **The method papers never ran this comparison.** WorkspaceBench, the J-lens paper, the NLA paper, Activation
-   Oracles and LatentQA all score a reader on naming something built to be absent from the text (an unspoken
-   intermediate, a planned rhyme, a secret word, an implanted quirk), pass an item if any layer at any position hits,
-   and compare lens against lens. The text-only floor is reported but not subtracted. The three studies that do run a
-   text baseline on visible behavior (Li et al., ICML 2026; CHIVE; the MATS WorkspaceBench control) find zero uplift.
-2. **Readouts forecast the next text.** The O-lens reconstructor is trained to predict the state that precedes a
-   phrase, so its reward selects the model's own likely continuations; four sampled continuations score 0.35 on
-   WorkspaceBench against 0.41 for the trained lens. Here the O-lens rises before a fork by the same amount whether the
-   words are a chat or a plain document, and its only strong signal (.82) is at forks where the token is already
-   written.
-3. **The state has not decided yet.** A probe trained on the full state scores .55 on the 500 cut points, the same as
-   the verbalizers and the text, against a judge-noise ceiling of .87. The weird turn is a late, stochastic event; no
-   reader can report a decision the model has not made.
-4. **A component is not a state.** Read blind, the O-lens separates the 100 causally important neurons from the other
-   900 of the attribution's top-1,000 at AUROC .46 to .63, while it registers their removal in a real state at −0.9 on
-   0 to 10. It measures what an intervention changed and cannot say which intervention to make. SAE labels and J-lens keywords fail the same way.
-5. **The verbalizer answers from its own knowledge** (Li et al.): the O-lens of the prompt read as a plain document
-   helps Opus predict edits exactly as much as the O-lens of the chat state.
+1. **Where the methods succeeded.** Activation Oracles named a Taboo word that Gemma-2-9B was trained to hide in 21% of
+   games (4% for the best prior white-box method); LatentQA recovered a hidden system prompt in 92% of hard cases; the
+   NLA named a poem's planned rhyme word a line early and steering from the edited explanation changed the rhyme about
+   half the time; the J-lens read arithmetic intermediates (21, 42, 49) and two-hop bridge entities, and swapping one
+   J-lens coordinate changed the answer 54 to 70% of the time; WorkspaceBench scores readers on 3,356 items whose target
+   is "logically inferable from the prompt but never stated". In every case the target is computed before the read
+   position and withheld from the text, an item passes if any layer at any position names it, and the comparison is
+   with other readers or a prompt-only guesser, never with a judge reading the transcript at the same position.
+2. **Where the methods were compared with reading the text, they lost.** CHIVE (Gemma-3-27B, predicting which prompt
+   edits change a behavior): transcript .814, plus an activation oracle .810, plus an NLA .808. Li et al. (ICML 2026,
+   relation extraction): LatentQA with the activation .64, the same verbalizer with the text and no activation .64. The
+   MATS WorkspaceBench control (four families): a text model given the prompt .89, plus the NLA's reading .88. WeirdChat:
+   the three evals above.
+3. **The NLA and O-lens are trained to predict the next text.** The O-lens reward is a reconstructor that maps a phrase
+   back to the activation preceding it, so the verbalizer is rewarded for writing what the model is about to say; four
+   sampled continuations score .35 on WorkspaceBench against .41 for the trained lens. On WeirdChat the O-lens score
+   rises before a fork by the same amount whether the words are a chat or a plain document, and its only strong
+   separation (.82) is at the 46 sharp forks, where the fork token is already written.
+4. **At the position where a monitor would act, the block-48 state does not yet determine the outcome.** A ridge probe
+   trained on the full state at the 500 eval A cut points separates the weird from the normal continuation at AUROC
+   .55, the same as every verbalizer and the text judge, against a judge-noise ceiling of .87. Measured P(weird) is .18
+   before a sharp fork and jumps by 50 points or more at one token. No reader can report a choice the model has not
+   made. This is a failure mode the readout literature has not named: the readout is accurate (the O-lens's three
+   continuations at the case-study state match the model's own next-token distribution) and useless, because the state
+   holds a probability, not a decision. The published failure modes (confabulation, vagueness, text inversion, labels
+   that do not predict steering) do not apply to it.
+5. **A readout of a neuron's output direction says nothing about what ablating the neuron does.** Read blind, the
+   O-lens separates the 100 neurons whose ablation stops the behavior from the other 900 of the attribution's top-1,000
+   at AUROC .46 to .63, while it registers their removal in a real state at −0.9 on 0 to 10 (+0.1 for a random change
+   of the same size). It measures what an edit changed and cannot say which edit to make. SAE auto-labels (contexts in
+   which a feature fires) and J-lens keywords (the keywords we chose) fail the same way. That auto-labels do not predict
+   steering is known (AxBench); the within-lens dissociation is the new element.
+6. **The Opus reader uses its own knowledge.** In eval B the O-lens description of the prompt read as a plain document
+   helps Opus predict prompt edits exactly as much as the description of the chat state (.848 against .849), and
+   neither helps (.864 from the transcript alone).
 6b. **A new O-lens with a ridge reconstructor and a whitened reward does not change this.** The affine-map lens
    (camila-blank, iter 600) scores .551 at block 44 on the 500 cut points against .560 for the s3d lens and .561 for
    the text judge, with zero gain over the text judge, and recognises the causal neurons no better (AUROC .47 to .61).
    Its unwhitened sibling and the whitened lens A land in the same place. 1.5 GPU-hours; findings/evalc/olens_a_summary.md.
-6. **Confabulation and web-text training are present but secondary.** The O-lens was trained on this model's chat replies
-   and confabulates less than the NLA; it still gains nothing.
-
-7. **The objection that WeirdChat is the wrong benchmark for these methods.** The papers' own uses are monitoring and
-   auditing deployed models, and whether the next sentence will claim "my own testing" is unwritten until the token
-   appears, so the question is of the kind they claim to answer. The finding is that the variable is not computed
-   ahead of the token; the benchmarks read planned content, and this behavior is not planned. The one place a readout
-   should beat the transcript in WeirdChat is drunk driving, where the direction separates replies within 8 tokens;
-   that test is cheap and not yet run.
+7. **Confabulation and web-text training are present but secondary.** The NLA and SAE reconstruct our chat states 10 to
+   25 points worse than their training text; the O-lens was trained on this model's own chat replies and confabulates
+   less; the affine lens has the fewest false claims of the four; none gains anything.
+8. **The objection that WeirdChat is the wrong benchmark for these methods.** The NLA paper presents the lens flagging
+   evaluation awareness and a misreported tool call as monitoring uses, the J-lens paper presents blackmail and
+   evaluation-context recognition, Activation Oracles are presented as an auditing tool: claims about catching unwanted
+   behavior in a deployed model, which is what WeirdChat catalogues. WeirdChat does hold an unwritten variable until the
+   fork token appears (whether the next sentence will claim "my own testing"); the finding is that this variable is not
+   computed ahead of the token. The one place a readout should beat the transcript in WeirdChat is drunk driving, whose
+   direction separates replies within 8 tokens; that test (about one GPU-hour) is not yet run.
 
 What a readout would have to say instead, on one state. One token before a fake-code-execution turn ("In" after a
 benchmark script), the O-lens lists three plausible next sentences, two weird and one not, which is what the model's
