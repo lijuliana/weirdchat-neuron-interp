@@ -20,7 +20,7 @@ STYLE = r"""\usepackage[T1]{fontenc}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepgfplotslibrary{groupplots,fillbetween}
-\usetikzlibrary{calc}
+\usetikzlibrary{calc,arrows.meta}
 % one colour per kind of method, the same in every figure (Okabe-Ito)
 \definecolor{neur}{HTML}{D55E00}   % neurons chosen by attribution
 \definecolor{dirc}{HTML}{009E73}   % directions from the weird-vs-normal contrast
@@ -803,7 +803,74 @@ def fig_m_sae():
     build("fig_m_sae", "\n".join(L))
 
 
-FIGS = {"fig_evalc": lambda: fig_evalc(evalc_data()), "fig_monitors": fig_monitors, "fig_fork": fig_fork, "fig_dir_own": fig_dir_own,
+def fig_steer():
+    """Steering along the Assistant Axis at the forks: (a) dose-response per behavior, (b) the push with neuron sets zeroed."""
+    P = json.load(open(os.path.join(REPO, "runs/persona_p1/analysis.json")))["c1"]["per_behavior"]
+    X = json.load(open(os.path.join(REPO, "runs/persona_fwd/x1_analysis.json")))["groups"]
+    doses = [("axis-0.5", -0.5), ("axis-0.25", -0.25), (None, 0.0), ("axis+0.1", 0.1), ("axis+0.25", 0.25), ("axis+0.5", 0.5)]
+    hi = [("fabricated-code-execution", "Fake code execution", "*"), ("claims-called-911", "Called 911", "square*"),
+          ("false-physical-embodiment", "Claiming a body", "triangle*"), ("denying-ai-identity", "Denying AI", "diamond*")]
+    lo = [("laser-at-aircraft", "Laser"), ("recommends-drunk-driving", "Drunk driving"), ("chemtrails-assertion", "Chemtrails"),
+          ("cutting-instructions", "Cutting")]
+    val = lambda b, k: 0.0 if k is None else 100 * P[b][k]["dV"]
+    import statistics as st
+    band = []
+    for k, x in doses:
+        if k is None:
+            band.append((x, 0.0, 0.0)); continue
+        m = st.median(P[b][k]["rand_mean"] for b, *_ in hi + lo); s = st.median(P[b][k]["rand_sd"] for b, *_ in hi + lo)
+        band.append((x, 100 * (m - 2 * s), 100 * (m + 2 * s)))
+    L = [r"\begin{tikzpicture}",
+         r"\begin{axis}[name=a, width=8.2cm, height=7cm, xmin=-0.55, xmax=0.55, xtick={-0.5,-0.25,0,0.25,0.5},"
+         r" xticklabels={$-0.5$,$-0.25$,0,$+0.25$,$+0.5$}, ymin=-25, ymax=50, ytick={-20,-10,0,10,20,30,40,50},"
+         r" yticklabel={$\pgfmathprintnumber{\tick}$}, axis x line*=bottom, axis y line*=left, ymajorgrids,"
+         r" xlabel={Push along the Assistant Axis at block 32\\(times the median state norm)}, xlabel style={align=center},"
+         r" ylabel={Change in chance of the weird token (points)}, title={(a)}, title style={at={(-0.25,1.02)}, anchor=south west}]",
+         rf"\addplot[name path=bu, draw=none] coordinates {{{' '.join(f'({x},{f(h,2)})' for x, l_, h in band)}}};",
+         rf"\addplot[name path=bd, draw=none] coordinates {{{' '.join(f'({x},{f(l_,2)})' for x, l_, h in band)}}};",
+         r"\addplot[ctrl, fill opacity=0.25] fill between[of=bu and bd];",
+         r"\draw[black!40, line width=0.5pt] (axis cs:-0.55,0) -- (axis cs:0.55,0);",
+         r"\node[font=\scriptsize, black!60, anchor=south west] at (axis cs:-0.53,-24) {$\leftarrow$ away from the assistant end};",
+         r"\node[font=\scriptsize, black!60, anchor=south east] at (axis cs:0.53,-24) {toward it $\rightarrow$};",
+         r"\node[font=\scriptsize, ctrl!80!black, anchor=north, align=center] at (axis cs:-0.27,-7) {random directions,\\same size};"]
+    vb = P["fabricated-code-execution"]["V_base_mean"]; vc = vb + P["fabricated-code-execution"]["axis-0.5"]["dV"]
+    L.append(rf"\node[font=\scriptsize, pers!85!black, anchor=south west, align=left] at (axis cs:-0.48,{f(100*(vc-vb)+1,2)}) {{fake code execution: {100*vb:.0f}\% $\to$ {100*vc:.0f}\%}};")
+    for b, lab in lo:
+        L.append(rf"\addplot[ctrl, line width=0.7pt, mark=*, mark size=0.9pt] coordinates {{{' '.join(f'({x},{f(val(b,k),2)})' for k, x in doses)}}};")
+    ends = []
+    for b, lab, mk in hi:
+        L.append(rf"\addplot[pers, line width=1.3pt, mark={mk}, mark size=2pt] coordinates {{{' '.join(f'({x},{f(val(b,k),2)})' for k, x in doses)}}};")
+        ends.append([val(b, "axis+0.5"), lab])
+    ends.sort(key=lambda e: -e[0])
+    for i in range(1, len(ends)):
+        if ends[i - 1][0] - ends[i][0] < 3.6:
+            ends[i][0] = ends[i - 1][0] - 3.6
+    for y, lab in ends:
+        L.append(rf"\node[font=\scriptsize, pers!85!black, anchor=west] at (axis cs:0.53,{f(y,2)}) {{{lab}}};")
+    L.append(r"\node[font=\scriptsize, ctrl!80!black, anchor=west, align=left] at (axis cs:0.53,6) {laser, drunk driving,\\chemtrails, cutting};")
+    L.append(r"\end{axis}")
+    # (b) the same push with each behavior's top-100 neurons zeroed (forks the sets were not chosen on)
+    rows = [("911", "Called 911"), ("code", "Fake code execution"), ("dai", "Denying AI"), ("embodiment", "Claiming a body"), ("laser", "Laser")]
+    L.append(r"\begin{axis}[at={($(a.east)+(6.6cm,0)$)}, anchor=west, width=7cm, height=6.4cm, xmin=-10, xmax=30, xtick={-10,0,10,20,30},"
+             r" ymin=-4.6, ymax=0.9, ytick={0,-1,-2,-3,-4}, yticklabels={" +
+             ",".join("{" + n + rf" ({X[k + '|outsample']['V']['n']})" + "}" for k, n in rows) + r"},"
+             r" y tick label style={font=\footnotesize}, major y tick style={draw=none}, axis x line*=bottom, axis y line*=left, xmajorgrids,"
+             r" xlabel={Change in chance of the weird token\\from a push of $-0.25$ (points)}, xlabel style={align=center}, title={(b)}, title style={at={(-0.62,1.12)}, anchor=south west}]")
+    L.append(r"\draw[black!40, line width=0.5pt] (axis cs:0,-4.6) -- (axis cs:0,0.9);")
+    for i, (k, n) in enumerate(rows):
+        V = X[k + "|outsample"]["V"]; y = -i
+        s0, s1, sr = 100 * V["S0_steer_clean"], 100 * V["S1_steer_under_top"], 100 * V["S_steer_under_rand100"]
+        c0, c1 = [100 * v for v in V["ci"]["S0"]], [100 * v for v in V["ci"]["S1"]]
+        L.append(rf"\addplot[only marks, mark=o, mark size=2.4pt, ctrl, line width=0.8pt] coordinates {{({f(sr,2)},{y+0.22})}};")
+        L.append(rf"\addplot[only marks, mark=*, mark size=2.4pt, pers, ci] coordinates {{({f(s0,2)},{y+0.22}) += ({f(c0[1]-s0,2)},0) -= ({f(s0-c0[0],2)},0)}};")
+        L.append(rf"\addplot[only marks, mark=*, mark size=2.4pt, neur, ci] coordinates {{({f(s1,2)},{y-0.18}) += ({f(c1[1]-s1,2)},0) -= ({f(s1-c1[0],2)},0)}};")
+    L.append(r"\node[font=\scriptsize, anchor=south west, align=left] at (axis cs:-9.5,0.55) {\tikz\fill[pers] (0,0) circle (2.4pt); push alone\quad"
+             r" \tikz\fill[neur] (0,0) circle (2.4pt); with the top-100 neurons zeroed\\ \tikz\draw[ctrl, line width=0.8pt] (0,0) circle (2.4pt); with 100 random neurons zeroed};")
+    L += [r"\end{axis}", r"\end{tikzpicture}"]
+    build("fig_steer", "\n".join(L))
+
+
+FIGS = {"fig_evalc": lambda: fig_evalc(evalc_data()), "fig_steer": fig_steer, "fig_monitors": fig_monitors, "fig_fork": fig_fork, "fig_dir_own": fig_dir_own,
         "fig_m_neurons": fig_m_neurons, "fig_m_direction": fig_m_direction, "fig_m_probe": fig_m_probe, "fig_m_axis": fig_m_axis,
         "fig_m_jlens": fig_m_jlens, "fig_m_olens": fig_m_olens, "fig_m_nla": fig_m_nla, "fig_m_sae": fig_m_sae,
         "fig_dir_transfer": fig_dir_transfer, "fig_dir_prefix": fig_dir_prefix, "fig_axis": fig_axis, "fig_lens": fig_lens_measure_pick,
