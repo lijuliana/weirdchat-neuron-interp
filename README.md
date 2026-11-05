@@ -59,8 +59,10 @@ Results that differ from what we expected:
    adds nothing beyond a random draw (59%). So the top-100 set's large margin over random sets is mostly a margin over
    neurons outside the attribution's pool; against draws from inside the pool it would be about 22%.
 3. **The neuron sets work only on their own behavior, and not always then.** Zeroing the code-execution set takes fake code execution
-   to 0% on 14 new prompts, and the 911 set takes 911 to 0%, yet the denying-AI set leaves denying AI untouched. The
-   direction, fit once per behavior with no attribution, has no such hole.
+   to 0% on 14 new prompts, and the 911 set takes 911 to 0%, yet the denying-AI set leaves denying AI untouched. Applied to the other four behaviors' prompts, each top-100 set leaves them at 0.5 to 1.8 times their unedited rate
+   (median 0.9 across the 20 set-by-behavior cells), the spread random 100-neuron sets also show; the one clear move is the
+   denying-AI set raising false embodiment 1.8-fold.
+   The direction, fit once per behavior with no attribution, has no such hole.
 4. **Readout-selected edits do not work.** Features chosen because their auto-labels mention the behavior (SAE), and a
    direction built from the behavior's keywords through the J-lens, move the rate 12% and 33%, no better than random
    features or token directions. What a component "says" in text did not predict what removing it does.
