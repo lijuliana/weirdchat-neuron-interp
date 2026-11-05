@@ -135,7 +135,7 @@ function renderBehavior(b) {
 }
 const METHODS = '__methods';
 // Compare-methods subtabs: each pane lists the figures it holds, drawn when the pane is shown (hidden panes have no width).
-const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figEvalC, figStop], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [], why: () => [], table: () => [] };
+const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figEvalC, figStop], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [figChive], why: () => [], table: () => [] };
 function showSub(k) {
   if (!SUBS[k]) k = 'stop';
   state.sub = k;
@@ -886,15 +886,46 @@ function barFig(id, groups, o) {
 
 function figEvalC() {
   const E = CMP.evalc; if (!E) return;
-  const order = ['C1a', 'C3', 'C2', 'C6', 'C1b', 'C5', 'C7'], A = Object.fromEntries(E.arms.map(a => [a.arm, a]));
+  const order = ['C1a', 'R', 'C3', 'C2', 'C6', 'C1b', 'C5', 'C7'], A = Object.fromEntries(E.arms.map(a => [a.arm, a]));
   const clip = v => v.map(x => Math.max(0, Math.min(1.05, x)));
   const groups = order.filter(k => A[k]).map(k => {
     const a = A[k], fam = a.family === 'size-matched' ? 'random sets of the same size and layers' : a.arm === 'C2' ? 'damage-matched role caps' : 'random directions at the same norm';
     return { lab: a.short, short: a.short.replace(' direction', ' dir.').replace(' neurons', ''), bars: [
-      { v: clip(a.drop), c: '--hot', title: `${a.short}: rate ${pct(a.clean)} → ${pct(a.arm8[0])}, a ${pct(a.drop[0])} drop [${pct(a.drop[1])}, ${pct(a.drop[2])}]; damage ${a.damage} nats/token` },
-      { v: clip(a.excess), c: '--accent', title: `${a.short}: ${pct(a.excess[0])} of the clean rate beyond ${a.ctrl[3]} ${fam} (worst control ${pct(a.ctrl[0])}, range ${pct(a.ctrl[1])}–${pct(a.ctrl[2])}); ${a.pass ? 'clears' : 'under'} the 50% bar${a.holm != null ? `, Holm p ${a.holm}` : a.confirmatory ? ', confirmatory arm' : ''}` }] };
+      { v: clip(a.drop), c: '--hot', op: a.derived ? 0.5 : undefined, title: `${a.short}: rate ${pct(a.clean)} → ${pct(a.arm8[0])}, a ${pct(a.drop[0])} drop [${pct(a.drop[1])}, ${pct(a.drop[2])}]; damage ${a.damage} nats/token${a.derived ? ` (pooled over ${a.draws.length} draws, single draws ${pct(Math.min(...a.draws))}–${pct(Math.max(...a.draws))}; derived row, not a pre-registered arm)` : ''}` },
+      { v: clip(a.excess), c: '--accent', op: a.derived ? 0.5 : undefined, title: `${a.short}: ${pct(a.excess[0])} of the clean rate beyond ${a.ctrl[3]} ${fam} (worst control ${pct(a.ctrl[0])}, range ${pct(a.ctrl[1])}–${pct(a.ctrl[2])}); ${a.pass ? 'clears' : 'under'} the 50% bar${a.holm != null ? `, Holm p ${a.holm}` : a.confirmatory ? ', confirmatory arm' : ''}` }] };
   });
   barFig('fig-evalc', groups, { ymax: 1.05, ticks: [0, 0.25, 0.5, 0.75, 1], h: 230, ref: E.bar });
+}
+
+function figChive() {
+  const id = 'fig-chive', C = CMP.chive;
+  if (!C) { $(id).closest('figure').hidden = true; return; }
+  const W = figW(id), narrow = W < 560, R = Object.fromEntries(C.rows.map(r => [r.lab, r]));
+  const get = k => R[k] && R[k].auroc, dl = k => R[k] && R[k].delta;
+  const labW = narrow ? 120 : Math.min(240, Math.round(W * 0.36)), xr = W - 2, numW = narrow ? 0 : 92, x0 = labW + 10, x1 = W - numW - 8;
+  const lo = 0.75, hi = 1.0, x = v => x0 + (x1 - x0) * (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo);
+  const rh = 26, top = 26;
+  const plain = get('transcript only'), ref = plain && plain[0];
+  const f2 = v => v.toFixed(3).replace(/^0/, ''), sg = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(3).replace(/^0/, '');
+  const tt = (lab, v, d) => `${lab}: AUROC ${f2(v[0])} [${f2(v[1])}, ${f2(v[2])}]${d ? `; ${sg(d[0])} vs transcript only [${sg(d[1])}, ${sg(d[2])}]` : ''}`;
+  const pair = (lab, mk, ck, c) => ({ lab: esc(lab), num: narrow || !dl(mk) ? null : sg(dl(mk)[0]), marks: [
+    { v: get(mk), c, title: tt(lab, get(mk), dl(mk)) },
+    { v: get(ck), c, shape: 'square', hollow: true, title: tt(`${lab}, control`, get(ck), dl(ck)) }] });
+  const rows = [
+    { lab: 'Transcript only', num: narrow ? null : f2(ref), marks: [{ v: plain, c: '--muted', shape: 'square', title: tt('Transcript only', plain) }] },
+    pair(narrow ? 'Top-100 neuron set' : '+ own top-100 neuron set', '+ neuron set', '+ random neuron set (control)', '--hot'),
+    pair('+ O-lens', '+ O-lens', '+ O-lens of the prompt read as a plain document (control)', '--accent'),
+    pair('+ Assistant Axis', '+ Assistant Axis', '+ random direction (control)', '--accent'),
+    { lab: narrow ? '+ 8 sampled outcomes' : '+ 8 sampled outcomes (positive control)', num: narrow || !dl('+ sampled outcomes (positive control)') ? null : sg(dl('+ sampled outcomes (positive control)')[0]),
+      marks: [{ v: get('+ sampled outcomes (positive control)'), c: '--ok', title: tt('8 sampled outcomes (positive control)', get('+ sampled outcomes (positive control)'), dl('+ sampled outcomes (positive control)')) }] }];
+  const bot = top + rows.length * rh;
+  let g = '';
+  for (const t of [0.75, 0.8, 0.85, 0.9, 0.95, 1]) g += ln(x(t), top, x(t), bot + 4, '--rule', 'stroke-dasharray="2 4"') + tx(x(t), bot + 18, t.toFixed(2), '', 'middle');
+  if (ref != null) g += ln(x(ref), top, x(ref), bot, '--muted', 'stroke-dasharray="5 3" stroke-width="1.3"') + tx(x(ref) + 4, top - 8, 'transcript only', 'dl', 'start');
+  g += dotRows(rows, { x, x0, top, rh, xr: narrow ? null : xr });
+  if (!narrow) g += tx(xr, top - 8, 'vs transcript', 'axt', 'end');
+  g += tx((x0 + x1) / 2, bot + 36, narrow ? 'Stratified AUROC, TRUE vs FALSE edits' : 'How well Opus separates edits that change the rate from edits that do not (stratified AUROC)', 'axt', 'middle');
+  setSVG(id, W, bot + 44, g);
 }
 
 function figStop() {

@@ -23,7 +23,7 @@
 Same inputs as scripts/89 plus runs/persona_p1/b_proj.npz, runs/persona_p3/analysis.json,
 runs/gradual_g1/{g1_rates.csv,damage.json} and runs/gradual_g2/g2_by_prefix.csv.
 """
-import argparse, json
+import argparse, json, os, re
 from collections import defaultdict
 import numpy as np
 import pandas as pd
@@ -215,16 +215,46 @@ try:
                      "damage": float(f"{r.damage:.4f}"), "holm": None if pd.isna(r.holm_p) else f3(r.holm_p), "p": f3(r.boot_p),
                      "pass": bool(r.excess >= .5 and r.damage <= .02), "confirmatory": bool(r.confirmatory),
                      "mmlu": f3(r.mmlu), "gsm8k": f3(r.gsm8k), "deploy": r.deploy_overhead})
+    # derived row (not a pre-registered arm): the 10 random 100-neuron draws from the attribution's top-1000 (C7's
+    # controls) pooled as one pseudo-arm, scored like C1a against its 20 size-and-layer-matched random sets
+    # (runs/evalc/judge/eval/random_pool.json, computed with 61_evalc_analyze.arm_stats)
+    if os.path.exists("runs/evalc/judge/eval/random_pool.json"):
+        R = json.load(open("runs/evalc/judge/eval/random_pool.json"))
+        arms.append({"arm": "R", "short": "Random 100 of top-1000", "label": "Random 100 of the attribution's top-1000, pooled over 10 draws",
+                     "condition": "C7 controls pooled", "clean": f3(R["clean"]), "arm8": [f3(R["arm8"]), f3(R["arm8_lo"]), f3(R["arm8_hi"])],
+                     "drop": [f3(R["raw_drop"]), f3(R["raw_drop_lo"]), f3(R["raw_drop_hi"])],
+                     "excess": [f3(R["excess"]), f3(R["excess_lo"]), f3(R["excess_hi"])],
+                     "ctrl": [f3(R["ctrl_q"]), f3(R["ctrl_min"]), f3(R["ctrl_max"]), int(R["n_controls"])], "family": "size-matched",
+                     "damage": float(f"{R['damage']:.4f}"), "holm": None, "p": f3(R["boot_p"]), "pass": bool(R["pass"]), "confirmatory": False,
+                     "derived": True, "draws": [f3(d["raw_drop"]) for d in R["draws"]], "mmlu": None, "gsm8k": None, "deploy": None})
     by = defaultdict(dict)
     for r in bb[bb.status.str.startswith("per-behavior")].itertuples():
         by[r.arm][r.behavior] = {"clean": f3(r.clean), "arm8": f3(r.arm8), "drop": f3(r.raw_drop), "excess": f3(r.excess), "n": int(r.n_prompts)}
+    if os.path.exists("runs/evalc/judge/eval/random_pool.json"):
+        for b, v in json.load(open("runs/evalc/judge/eval/random_pool.json"))["by"].items():
+            by["R"][b] = {"clean": f3(v["clean"]), "arm8": f3(v["arm8"]), "drop": f3(v["drop"]), "excess": f3(v["excess"]), "n": int(v["n"])}
     evalc = {"arms": arms, "by": dict(by), "bar": 0.5, "gate": 0.02, "n_prompts": int(mt.n_prompts.iloc[0]), "clean": f3(mt.clean.iloc[0])}
 except FileNotFoundError as e:
     print("evalc: skipped,", e)
 
+# ---- eval B (explanation): the results table of findings/chive/report.md (written by the CHIVE session), parsed as is
+chive = None
+try:
+    rows_b = []
+    for line in open("findings/chive/report.md"):
+        m = re.match(r"\|\s*(.+?)\s*\|\s*(\d+)\s*\|\s*([\d.]+) \[([\d.]+), ([\d.]+)\]\s*\|\s*(?:([+-][\d.]+) \[([+-][\d.]+), ([+-][\d.]+)\])?\s*\|\s*(<?[\d.]*)\s*\|", line)
+        if m:
+            lab, n, a, lo, hi, d, dlo, dhi, hp = m.groups()
+            rows_b.append({"lab": lab, "n": int(n), "auroc": [float(a), float(lo), float(hi)],
+                           "delta": [float(d), float(dlo), float(dhi)] if d else None, "holm": hp or None})
+    if rows_b:
+        chive = {"rows": rows_b}
+except FileNotFoundError as e:
+    print("chive: skipped,", e)
+
 titles = {b["id"]: b["title"] for b in json.load(open(f"{args.out}/index.json"))["behaviors"]}
 json.dump({"titles": titles, "within": within, "fork": fork, "stop": stop, "axis": {"tau": 8.52, "mu": 11.13},
-           "dirs": dirs, "shared": shared, "abl": abl, "nlab": nlab, "mon": mon, "evalc": evalc},
+           "dirs": dirs, "shared": shared, "abl": abl, "nlab": nlab, "mon": mon, "evalc": evalc, "chive": chive},
           open(f"{args.out}/compare.json", "w"), separators=(",", ":"))
 if mon: print("mon:", [(r["id"], r["auroc"] and r["auroc"][0], r["partial"] and r["partial"][0]) for r in mon["rows"]])
 print("within all:", within["all"])

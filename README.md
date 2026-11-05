@@ -34,6 +34,7 @@ exploratory comparisons; the top-100 set is the single pre-declared confirmatory
 | Intervention (method) | Clean → treated | Drop | Beyond matched controls | Damage, nats/token | Verdict |
 |---|---|---|---|---|---|
 | Zero own top-100 neurons (attribution; reference) | 29% → 9% | 68% [50, 86] | 86% beyond 20 random sets, p 4e-8 | .0047 | clears the bar |
+| Zero a random 100 of the attribution's top-1,000 (pooled over the 10 draws used as the O-lens arm's controls; derived row, not pre-registered) | 29% → 13% | 55% [41, 69]; single draws 46-62% | 74% beyond the same 20 random sets | .0013 | clears the bar at a quarter of the top-100's damage |
 | Ceiling on the weird-vs-normal direction, layers 40-56 (difference of means, block 48) | 29% → 10% | 65% [49, 78] | 79% beyond 10 random directions, p 2e-10 | .0118 | clears the bar |
 | Assistant Axis cap, 25th percentile, layers 40-59 (persona vectors) | 29% → 20% | 32% [18, 48] | 54% beyond 10 role caps of equal damage, p .006 after Holm correction | .0088 | clears the bar narrowly; 34% on the four replies per prompt not used for the control comparison |
 | Zero shared mid-layer 100 neurons | 29% → 20% | 32% [18, 46] | 43%, p .002 after Holm correction | .0200 | under the bar |
