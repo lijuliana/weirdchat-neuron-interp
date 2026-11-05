@@ -516,9 +516,9 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
         <figcaption><b>Figure 12.</b> Rows: the direction fit on one behavior (all of its prompts). Columns: the behavior whose replies are scored. Cell: within-prompt AUROC; blue above chance, red below, deeper is further from .5. Outlined diagonal cells are cross-validated over prompts. Bottom row: the unit mean of the other ten behaviors' directions. Called 911, denying AI and sexual advances are read above .7 by almost every direction; fake code execution is read at .47 to .60 by every direction but its own.</figcaption>
       </figure>
       <figure class="fig">
-        <h3>The separation is the same at every block from 16 to 56</h3>
+        <h3>The direction separates weird from normal replies equally well whichever block it is fit on, from block 16 to block 56</h3>
         <svg id="fig-dir-layers" role="img" aria-label="Cross-validated AUROC of each behavior's own direction by decoder block"></svg>
-        <figcaption><b>Figure 13.</b> Cross-validated within-prompt AUROC of each behavior's own direction, fit and read at the output of one decoder block (16 to 56 of 64), whole-reply mean. Block 48, outlined, was fixed before eval A and eval C.</figcaption>
+        <figcaption><b>Figure 13.</b> Each cell is the cross-validated within-prompt AUROC of the behavior's own direction when the direction is fit on, and read from, the output of one decoder block (16 to 56 of 64), whole-reply mean. For eight behaviors the value changes by at most .05 across blocks. Block 48, outlined, was fixed before eval A and eval C.</figcaption>
       </figure>
       <figure class="fig">
         <h3>How many reply tokens the direction needs: under 8 for called 911 and denying AI, over 128 for fake code execution and laser</h3>
