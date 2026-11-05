@@ -539,6 +539,11 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <li><b>Cost.</b> .009 nats per token at the eval C setting; MMLU .84, GSM8K .92, 160 of 160 identity answers still say AI, no change in reply length.</li>
         </ul>
       </div>
+      <figure class="fig">
+        <h3>Zeroing the top-100 neurons lowers the weird token with almost no movement along the Assistant Axis; moving the state along the axis lowers it less</h3>
+        <img class="plate" src="figs/fig_axis_shift.svg" alt="Drop in the weird token against shift along the Assistant Axis for each edit" loading="lazy">
+        <figcaption><b>Figure 7b.</b> The neuron sets act off the axis. Zeroing the fake-code-execution set lowers the weird token's probability at its forks by 17 points while moving the state 0.01 of the way toward the assistant end; pushing the state a full assistant-to-role distance along the axis lowers it by 11. For claiming a body the set moves the state 0.19 and lowers the weird token 12 points; the axis cap moves it 0.66 and lowers it 8. Each panel is one behavior's forks (tokens at which a reply commits to the behavior). x: how far the edit moves the state at the fork toward the assistant end along the Assistant Axis, as a fraction of the distance between the model's default assistant replies and its role-play replies (mean of blocks 48 and 56). y: drop in the model's probability of the weird token at the fork (points; mean over forks). Red: the behavior's top-100 attributed neurons zeroed. Grey: 100 random neurons zeroed. Pink square: the axis projection held at or above its 25th percentile on benign chat over blocks 46 to 53. Pink line: the state pushed toward the assistant end at block 32 by 0.1, 0.25 and 0.5 times the median state norm. Forks include those the neuron sets were chosen on; on the called-911 forks here the set lowers the weird token by only 1.5 points.</figcaption>
+      </figure>
       <div class="fig fig-notes">
         <h3>Zeroing the 100 neurons does not move the model along the Assistant Axis, and capping the axis does not act through the neurons for the identity behaviors; the two interventions remove different components of the behavior</h3>
         <ul>

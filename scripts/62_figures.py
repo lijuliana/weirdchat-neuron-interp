@@ -870,7 +870,36 @@ def fig_steer():
     build("fig_steer", "\n".join(L))
 
 
-FIGS = {"fig_evalc": lambda: fig_evalc(evalc_data()), "fig_steer": fig_steer, "fig_monitors": fig_monitors, "fig_fork": fig_fork, "fig_dir_own": fig_dir_own,
+def fig_axis_shift():
+    """Zeroing the top-100 neurons removes the weird token with almost no movement along the Assistant Axis."""
+    P = json.load(open(os.path.join(REPO, "runs/persona_p1/analysis.json")))["c1"]["per_behavior"]
+    beh = [("fabricated-code-execution", "Fake code execution"), ("false-physical-embodiment", "Claiming a body"),
+           ("denying-ai-identity", "Denying AI"), ("laser-at-aircraft", "Laser at aircraft"), ("claims-called-911", "Called 911")]
+    L = [r"\begin{tikzpicture}",
+         r"\begin{groupplot}[group style={group size=5 by 1, horizontal sep=0.35cm, y descriptions at=edge left},"
+         r" width=4.2cm, height=5.2cm, xmin=-0.1, xmax=1.65, xtick={0,0.5,1,1.5}, xticklabels={0,.5,1,1.5}, ymin=-3, ymax=22,"
+         r" ytick={0,5,10,15,20}, axis x line*=bottom, axis y line*=left, grid=major, title style={font=\footnotesize, align=center, yshift=-2pt}]"]
+    for i, (b, name) in enumerate(beh):
+        v = P[b]; d = v["d"]
+        sh = lambda k: (d["48"][k] + d["56"][k]) / 2
+        steer = [(0, 0)] + [(sh(f"steer_axis+{x}_shift_gap"), -100 * v[f"axis+{x}"]["dV"]) for x in ("0.1", "0.25", "0.5")]
+        L.append(rf"\nextgroupplot[title={{{name}\\[-1pt]{{\scriptsize\color{{black!55}}{v['n']} forks}}}}"
+                 + (r", ylabel={Drop in chance of the weird token (points)}" if i == 0 else "") + "]")
+        L.append(r"\draw[black!35, line width=0.5pt] (axis cs:-0.1,0) -- (axis cs:1.65,0);")
+        L.append(rf"\addplot[pers, line width=1.1pt, mark=o, mark size=1.6pt] coordinates {{{' '.join(f'({f(x,3)},{f(y,2)})' for x, y in steer)}}};")
+        L.append(rf"\addplot[only marks, mark=square*, mark size=2.2pt, pers] coordinates {{({f(sh('cap_shift_gap'),3)},{f(-100*v['e:cap_axis']['dV'],2)})}};")
+        L.append(rf"\addplot[only marks, mark=*, mark size=1.8pt, ctrl] coordinates {{({f(sh('rand_shift_gap'),3)},{f(-100*v['top100']['dV_rand100'],2)})}};")
+        L.append(rf"\addplot[only marks, mark=*, mark size=2.8pt, neur] coordinates {{({f(sh('top_shift_gap'),3)},{f(-100*v['top100']['dV_top'],2)})}};")
+    L += [r"\end{groupplot}",
+          r"\node[font=\small, anchor=north] at ($(group c3r1.south)+(0,-0.6cm)$) {Shift of the fork state toward the assistant end (fraction of the assistant-to-role distance, blocks 48 to 56)};",
+          r"\node[font=\footnotesize, anchor=south, align=center] at ($(group c3r1.north)+(0,0.85cm)$) {\tikz\fill[neur] (0,0) circle (2.8pt); top-100 neurons zeroed\qquad"
+          r" \tikz\fill[ctrl] (0,0) circle (1.8pt); 100 random neurons zeroed\qquad \tikz\fill[pers] (-2.2pt,-2.2pt) rectangle (2.2pt,2.2pt); Assistant Axis capped\\"
+          r" \tikz{\draw[pers, line width=1.1pt] (-0.25,0) -- (0.25,0); \draw[pers] (0,0) circle (1.6pt);} pushed toward the assistant end ($+0.1$, $+0.25$, $+0.5$)};",
+          r"\end{tikzpicture}"]
+    build("fig_axis_shift", "\n".join(L))
+
+
+FIGS = {"fig_evalc": lambda: fig_evalc(evalc_data()), "fig_steer": fig_steer, "fig_axis_shift": fig_axis_shift, "fig_monitors": fig_monitors, "fig_fork": fig_fork, "fig_dir_own": fig_dir_own,
         "fig_m_neurons": fig_m_neurons, "fig_m_direction": fig_m_direction, "fig_m_probe": fig_m_probe, "fig_m_axis": fig_m_axis,
         "fig_m_jlens": fig_m_jlens, "fig_m_olens": fig_m_olens, "fig_m_nla": fig_m_nla, "fig_m_sae": fig_m_sae,
         "fig_dir_transfer": fig_dir_transfer, "fig_dir_prefix": fig_dir_prefix, "fig_axis": fig_axis, "fig_lens": fig_lens_measure_pick,
