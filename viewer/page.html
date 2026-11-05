@@ -452,6 +452,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
       <button type="button" data-sub="edits" aria-selected="false">Eval B · Which prompt edits matter</button>
       <button type="button" data-sub="why" aria-selected="false">Why reading the transcript beats the readout methods</button>
       <button type="button" data-sub="table" aria-selected="false">All methods</button>
+      <button type="button" data-sub="setup" aria-selected="false">Methods &amp; setup</button>
     </nav>
     <div class="figs sub" id="compare-figs" data-sub="warn" hidden>
       <figure class="fig">
@@ -740,6 +741,60 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <li><b>Report the probe ceiling</b> (a supervised probe on the full state at the read position) before claiming a readout can or cannot read a target.</li>
           <li><b>Evaluate on behaviors the base model shows on its own,</b> not on implanted quirks or withheld secrets.</li>
           <li><b>Use readouts to measure interventions, not to choose them:</b> choose edits by contrast inside the model (attribution pools, difference-of-means directions), then use the lens to describe what the edit changed, the one place our lenses showed clear signal.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="sub" data-sub="setup" hidden>
+      <div class="fig fig-notes">
+        <h3>Every method, where it came from, what it was trained on, and how it was applied in each test</h3>
+        <p class="s">Shared setup. Subject model Qwen3.6-27B in bf16 (64 decoder blocks, residual width 5,120), served by vLLM with no system prompt, thinking off, temperature 1, top-k 20, top-p 0.95, 1,024-token cap. Prompts: the 403 WeirdChat v1.0.1 prompts for this model, 11 behaviors, split by prompt pattern into 220 discovery and 183 held-out prompts before any analysis. Behavior judge: Gemma 4 31B with WeirdChat's own rubric (agreement with re-judging .89 to .95). Readout judge: Claude Haiku 5.5, scoring each readout 0 to 100 per behavior without seeing the transcript. Explanation reader (eval B): Claude Opus 5.5. "Block L" means the output of decoder block L, raw, before the next block's normalization. Damage: the increase in next-token loss, in nats per token, on 200 benign chat replies and a capability text set, teacher-forced with the edit on; eval C's gate is .02.</p>
+      </div>
+      <div class="ct-wrap"><table class="ct ct-sm">
+        <thead><tr><th>Method</th><th>Source and training</th><th>How we applied it</th><th>Compute</th></tr></thead>
+        <tbody>
+          <tr><td><b>Neuron sets (attribution)</b><small>Agastya's top-10 / 100 / 1,000 per behavior</small></td>
+            <td>No training. For each of 46 forks (the token at which a reply commits to the behavior), activation × gradient of the fork token's log-probability for all 1.1M MLP neurons, summed over positions; summed over the behavior's forks with equal weight; top-k by that score. Shared mid-layer set: the 100 neurons from blocks 24 to 47 with the highest median score across 8 behaviors. All forks are on discovery prompts.</td>
+            <td>Eval C: zero the set's columns of down_proj (the MLP output weights) at every position during generation. Eval A: a ridge probe on the 100 neurons' activations at the cut point. Eval B: the set's attribution over the prompt's sentences and words plus the ten strongest neurons with descriptions, shown to Opus.</td>
+            <td>46 backward passes plus 2,714 single-neuron checks; rate tests 66 min on 8 H200s (Agastya)</td></tr>
+          <tr><td><b>Weird-vs-normal direction</b><small>One per behavior, block 48</small></td>
+            <td>No training. Difference of mean block-48 reply states between weird and normal replies to the same prompt, averaged over prompts (weight n<sub>w</sub>n<sub>n</sub>/(n<sub>w</sub>+n<sub>n</sub>)), unit norm. 16 replies per prompt, Gemma labels. Eval C used the version fit on discovery prompts only; monitors used 5-fold cross-validation over prompts. Joint version: unit mean of the 11 per-behavior directions.</td>
+            <td>Eval C: ceiling, h ← h − v·max(⟨h,v⟩ − τ, 0) at the outputs of blocks 40 to 56, τ the benign-chat 50th percentile of ⟨h,v⟩. Eval A: projection of the cut-point state. Direction tab: transfer and joint fits on stored reply states.</td>
+            <td>CPU for the fits; 1.4 GPU-h for the eval C arm and controls</td></tr>
+          <tr><td><b>Residual-stream probe</b><small>Eval A only</small></td>
+            <td>Ridge regression from the full block-L state (plus log position) to the logit of the measured chance of weird at 10,371 cut points; block chosen by inner cross-validation (mostly 48); 5 folds over prompt patterns. The ceiling for any single-state reader.</td>
+            <td>Eval A monitor; the probe ceiling cited in the Why tab.</td>
+            <td>CPU</td></tr>
+          <tr><td><b>Assistant Axis and persona vectors</b><small>Same0620/qwen36-27b-assistant-axis-persona-vectors</small></td>
+            <td>Community vectors for this model: the axis is the mean residual difference between the model answering as itself and as human personas, per block; 9 trait vectors (evil, sycophantic, hallucinating, …) and 265 role directions by the same recipe. Validated against our own assistant-minus-persona axis (6 personas × 12 prompts) and against the card. No training by us.</td>
+            <td>Eval C: cap from below at the benign 25th percentile of the projection, blocks 40 to 59 (strongest setting under the damage gate); earlier runs at blocks 46 to 53 and at the 50th and 75th percentiles. Eval A: projection of the cut-point state. Eval B: the prompt's final-state position on the axis shown to Opus. Steering: add the axis at block 32.</td>
+            <td>~2.8 A100-h (probe and steering), ~3.9 GPU-h (dose sweep, role and sycophancy caps), 1.1 GPU-h in eval C</td></tr>
+          <tr><td><b>O-lens (oracle lens)</b><small>agu18dec/olens_and_ar, s3d_rl600; variants lens A, lens B, affine-map</small></td>
+            <td>A LoRA copy of Qwen3.6-27B that writes phrase bullets about one activation injected at a marker token (norm 16,000, blocks 20 to 60 in steps of 4). Trained by supervised warm start on sampled continuations, then reinforcement learning whose reward is how well a reconstructor maps the bullets back to the state before the phrase, measured in a whitened basis. Trained on this model's own chat replies. Variants: lens B (concept-bullet carrier, all 64 blocks, norm 1,000), lens A (lens B with the reward in a whitened space), affine-map (camila-blank/…affwhitened-rl600: closed-form ridge reconstructor, carrier asks for the following text).</td>
+            <td>Eval A: 2 readouts per cut point at blocks 32/44/56, each Haiku-scored 0 to 100 per behavior. Eval B: the readout of the prompt's final state shown to Opus (control: the same prompt read as a plain document). Eval C: readouts of the +w and −w output directions of the top-1,000 neurons, Haiku-scored; keep the 100 that read as the behavior (O-lens arm; affine-map arm the same). Measurement: readouts of real states with neurons zeroed (Figure 6).</td>
+            <td>~6 H100-h over all lenses; Haiku ~12M input tokens</td></tr>
+          <tr><td><b>NLA (natural language autoencoder)</b><small>agu18dec/qwen3.6-27b-all-layer-nla-rl2000</small></td>
+            <td>EasyNLA recipe: a LoRA (r128) copy of the model writes an &lt;explanation&gt; of one activation injected at block 1 at a marker token, rescaled to the local residual norm; a separate reconstructor maps the explanation back; warm-started from Claude's guesses about web-text snippets, then 2,000 reinforcement-learning steps on reconstruction error. Trained on web text, not chat.</td>
+            <td>Eval A: readouts at block 44 (also 32), Haiku-scored. Eval C (post hoc): readouts of the top-1,000 neuron output directions at each neuron's own block, Haiku-scored, keep 100 per behavior. Reconstruction of our chat states: 39 to 48% of variance against 64 to 79% on its training text.</td>
+            <td>~1.5 H100-h (eval A) + 0.6 H100-h (neuron reads); Haiku ~3M input tokens</td></tr>
+          <tr><td><b>J-lens family</b><small>camilablank/workspace-lenses (J-lens, R-lens, template); neuronpedia/jacobian-lens (J++)</small></td>
+            <td>Linear maps from block L to the final layer: J-lens = the expected Jacobian of the final state with respect to the block-L state, fit on 25 pile-10k prompts with the official code; R-lens = the same with an LRP-modified backward pass; J++ fit on WikiText-103; template lens = cosine of the state against whitened template directions for words and phrases. No fine-tuning of the model.</td>
+            <td>Eval A: top-20 tokens (template: phrases) of the mapped block-44 state, Haiku-scored. Eval C: the J-lens direction of the behavior's keyword tokens (lensᵀ rows, unit norm) ceiled at the benign 25th percentile at block 44; controls are random tokens' directions at matched frequency and norm.</td>
+            <td>~0.5 H100-h; Haiku ~2M input tokens</td></tr>
+          <tr><td><b>SAE (sparse autoencoder)</b><small>ceselder/qwen36-27b-sae-l42-1b</small></td>
+            <td>131,072-feature sparse autoencoder on block 42, trained by its author on 1B tokens of web text; reconstructs our chat states at 59% of variance (70% on web text). Features labelled by us from top-activating web and benign-chat examples (Haiku).</td>
+            <td>Eval A: feature labels of the active features at the cut point, Haiku-scored (control: random features); a 16-feature sparse probe. Eval C: clamp to zero the features whose labels mention the behavior (plus general ones), through the decoder at block 42.</td>
+            <td>~1 H100-h; Haiku ~4M input tokens for labels</td></tr>
+          <tr><td><b>Text judge (reference)</b><small>Claude Haiku 5.5</small></td>
+            <td>No training. Reads the transcript up to the cut point and gives the chance the reply turns weird.</td>
+            <td>Eval A reference at every cut point. Eval B's reader (Opus) sees the transcript in every condition.</td>
+            <td>Haiku ~3M input tokens</td></tr>
+        </tbody></table></div>
+      <div class="fig fig-notes">
+        <h3>The three tests</h3>
+        <ul>
+          <li><b>Eval A, warning before the weird turn.</b> 410 weird replies with the measured chance of weird at every token (8 to 24 resampled continuations per cut point, Gemma-judged; 10,371 cut points). Two tests: (b) 500 cut points whose continuations split between weird and normal, AUROC of each monitor at the state 4 tokens in; (a) correlation of the monitor's score with the measured chance across a reply's cut points, corrected for position. Every monitor reads the same states; readouts are scored blind. Spec: runs/monitors/SPEC.md.</li>
+          <li><b>Eval B, which prompt edits matter</b> (after CHIVE). 118 prompts, 1,479 single edits written before any effect was measured, each edited prompt answered 32 to 64 times and Gemma-judged; TRUE if the rate moved 25 points or more, FALSE if 8 or less. Opus predicts the effect from the transcript, with or without a method's block; stratified AUROC; each method against a same-prompt control block. Spec: findings/chive/design.md.</li>
+          <li><b>Eval C, stopping the behavior.</b> 48 held-out prompts of the five behaviors with a neuron set, 16 clean replies, 8 per intervention, 4 per control; the strongest of three settings per method whose damage stays under .02, fixed before any behavior data; score = share of the clean rate removed beyond the worst of 10 to 20 matched random edits; pre-registered with frozen hashes (findings/evalc/spec.md). The NLA, affine-map and joint-direction arms were added afterwards and are reported outside the pre-registered family.</li>
         </ul>
       </div>
     </div>
