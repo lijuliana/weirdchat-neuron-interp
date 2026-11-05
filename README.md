@@ -188,6 +188,37 @@ Setup: `s3d_rl600` at layers 32/44/56, 2 readouts per position, each scored 0-10
 
 Figures: [forks](figures/olens_forks.svg), [ablation](figures/olens_ablation.svg). Tables: [runs/olens/analysis.md](runs/olens/analysis.md). Code: `src/olens.py`, scripts 80-90.
 
+### Weird-vs-normal direction
+
+**One direction per behavior, fit as the difference of means between weird and normal replies to the same prompt,
+separates its own behavior at cross-validated AUROC .67 to .94 (block 48, whole-reply mean), and a direction pooled from
+the other ten behaviors carries over to the identity behaviors (called 911 .88, denying AI .85, claiming a body .75)
+but not to fake code execution (.54). There is no single direction; eval C applied each behavior's own direction to
+its own held-out prompts.** Data: findings/direction/transfer_L48.json (from runs/persona_fwd/a1 states, scripts 73);
+viewer tab "Weird-vs-normal direction".
+
+![Direction transfer](figures/direction_transfer.svg)
+
+1. **Fit.** Per behavior and block, d_p = mean(weird) − mean(normal) of the reply-mean residual state within prompt p,
+   averaged over prompts with weight n_w n_n / (n_w + n_n), unit-normalized. Production labels (Gemma 4 31B, thinking
+   on), 16 replies per prompt, 11 behaviors, blocks 16 to 56. Nulls: within-prompt label shuffles and random unit
+   directions. Scored by within-prompt AUROC over (weird, normal) pairs, 5-fold cross-validation over prompts.
+2. **Own direction.** Called 911 .94, denying AI .92, chemtrails .88, drunk driving .86, claiming a body .77, cutting
+   .75, fake code execution .69, laser .67; shuffled-label 95th percentiles .56 to .77. Flat across blocks (at most
+   .05 change from 16 to 56). Separates called 911 and denying AI within 8 reply tokens, fake code execution and
+   laser only after 128 or more.
+3. **Transfer.** The unit mean of the other ten behaviors' directions scores called 911 .88, denying AI .85, sexual
+   advances .97, calorie restriction .83, purging .80, claiming a body .75 (nulls .55 to .71), and fake code
+   execution .54 (null .55), drunk driving .67, chemtrails .67, laser .68, cutting .71. Pairwise cosines are below .4
+   except denying AI with claiming a body (.49) and sexual advances with claiming a body or cutting (.42). Cosine with
+   our assistant-minus-persona axis is inside the shuffled null for nine behaviors (denying AI −.35, sexual −.33 at
+   the edge). The identity behaviors share a direction; fake code execution has its own.
+4. **As a monitor (eval A)** the direction scores .55 at a cut point against .56 for the text judge and a ceiling of
+   .87, the same as a supervised ridge probe on the full state (.53); see "Every method as a monitor".
+5. **As an intervention (eval C)** a ceiling at the benign median over layers 40 to 56 removes 65% of the behavior
+   (79% beyond norm-matched random directions), including denying AI; projecting the direction out entirely costs
+   .118 nats per token and does not help, so the behavior rides on the excess along the direction, not on its presence.
+
 ### Assistant Axis / persona vectors
 
 **Capping the Assistant Axis is nearly free and specific to the identity behaviors, but too weak. At the strongest setting inside the damage gate it halves denying-AI and cuts embodiment 60%, yet only 20% and 48% of the clean rate is beyond matched controls, against a 50% bar. The top-100 neuron sets do more where they work.**
@@ -233,6 +264,14 @@ Setup: community Qwen3.6-27B axis and 9 trait vectors ([Same0620/qwen36-27b-assi
    - Each behavior leans toward one of the 265 role directions on prompts not used to pick it (denying-AI: teenager / amateur; 911: caregiver; laser: tutor). Capping teenager halves denying-AI (35% to 17.5%, 44% beyond controls) but costs 0.026 nats/token, raises laser to 62.5%, and is no better than the axis cap (-4 points, CI -11 to +3). Capping actor, the embodiment pick, acts like the axis (cosine 0.89).
    - Only drunk driving lines up with the sycophancy vector. Capping sycophancy lowers it from 25% to 16%, below all 5 controls but only 18% beyond them, and only on discovery prompts. The vector does make the model flatter, but only at a dose costing 0.78 nats/token.
    - It barely touches the other behaviors. At the forks of all 11 it beats its 17 KL-matched controls only for drunk driving (-5% fork value) and embodiment (-12%), and raises denying-AI slightly. In generation embodiment drops 14 points, but the hallucination cap drops it more; laser rises 23 points, as under the dismissive cap.
+
+7. **Dose and cost on the 48 held-out prompts (eval C).** The 25th-percentile cap over layers 40-59 takes the pooled
+   rate 29% → 20% (denying AI 31% → 14%, claiming a body 17% → 9%, fake code execution 32% → 21%, laser 40% → 33%);
+   the 50th percentile removes 50% at .020 nats/token and the 75th 48% at .043, so the dose saturates. At every level
+   of damage the neuron-set ladder removes about twice as much. Ten role-direction caps matched to the axis cap's damage
+   remove −12% to +15%.
+
+![Assistant Axis dose and cost](figures/evalc_axis.svg)
 
 Caveats: 10 prompts per behavior, 3-5 control caps (beating all 3 happens by chance 1 time in 4, all 5 1 time in 6), community vectors, capping layers borrowed from Qwen3-32B. Code: scripts 70-74.
 

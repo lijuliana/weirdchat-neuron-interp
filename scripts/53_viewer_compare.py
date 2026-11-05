@@ -237,6 +237,53 @@ try:
 except FileNotFoundError as e:
     print("evalc: skipped,", e)
 
+# ---- Assistant Axis cap: dose ladder per behavior and the drop-vs-damage frontier of every rung and control
+# (runs/evalc/judge/eval/{c2_ladder,frontier}.json, computed from the judged rows with 61_evalc_analyze.arm_stats)
+axis = None
+try:
+    L = json.load(open("runs/evalc/judge/eval/c2_ladder.json")); F = json.load(open("runs/evalc/judge/eval/frontier.json"))
+    axis = {"ladder": {c: {"arm8": f3(v["arm8"]), "lo": f3(v["lo"]), "hi": f3(v["hi"]), "drop": f3(v["drop"]), "damage": float(f"{v['damage']:.4f}"),
+                           "by": {b: {"arm8": f3(w["arm8"]), "lo": f3(w["lo"]), "hi": f3(w["hi"]), "clean": f3(w["clean"]), "n": int(w["n"])} for b, w in v["by"].items()}}
+                      for c, v in L.items()},
+            "clean": f3(F["clean"]), "gate": F["gate"],
+            "points": [{"arm": q["arm"], "kind": q["kind"], "label": q["label"], "drop": f3(q["drop"]), "lo": f3(q["lo"]), "hi": f3(q["hi"]),
+                        "damage": None if q["damage"] is None else float(f"{q['damage']:.5f}")} for q in F["points"]]}
+except FileNotFoundError as e:
+    print("axis: skipped,", e)
+
+# ---- weird-vs-normal directions, all 11 behaviors (runs/persona_fwd/a1: a1 recipe; runs/direction/transfer_L48.json:
+# cross-behavior transfer, leave-one-behavior-out pooled direction, cosines, computed from a1/reply_means.npz)
+dirs11 = None
+try:
+    SHORT = {"recommends-drunk-driving": "drunk", "chemtrails-assertion": "chemtrails", "cutting-instructions": "cutting",
+             "laser-at-aircraft": "laser", "claims-called-911": "911", "denying-ai-identity": "dai", "fabricated-code-execution": "code",
+             "false-physical-embodiment": "embodiment", "purging-advice": "purging", "unsolicited-sexual-advances": "sexual",
+             "extreme-calorie-restriction": "calorie"}
+    TR = json.load(open("runs/direction/transfer_L48.json"))
+    am = pd.read_csv("runs/persona_fwd/a1/a1_main.csv"); am = am[(am.labels == "on16") & (am.window == "whole")]
+    ap_ = pd.read_csv("runs/persona_fwd/a1/a1_by_prefix.csv"); ap_ = ap_[(ap_.labels == "on16") & (ap_.train_window == "whole") & (ap_.layer == 48) & (ap_.scheme == "cv")]
+    own, layers, prefix = {}, {}, {}
+    for b, sh in SHORT.items():
+        r = am[(am.b == sh) & (am.layer == 48)]
+        cv, sp = r[r.scheme == "cv"], r[r.scheme == "split"]
+        own[b] = {"cv": None if cv.empty or pd.isna(cv.auroc_within.iloc[0]) else f3(cv.auroc_within.iloc[0]),
+                  "cv_pairs": None if cv.empty else int(cv.pairs.iloc[0]),
+                  "cv_shuf95": None if cv.empty or pd.isna(cv.shuffle_null_95.iloc[0]) else f3(cv.shuffle_null_95.iloc[0]),
+                  "cv_rand95": None if cv.empty or pd.isna(cv.rand_null_95.iloc[0]) else f3(cv.rand_null_95.iloc[0]),
+                  "split": None if sp.empty or pd.isna(sp.auroc_within.iloc[0]) else f3(sp.auroc_within.iloc[0]),
+                  "split_pairs": None if sp.empty else int(sp.pairs.iloc[0]),
+                  "split_shuf95": None if sp.empty or pd.isna(sp.shuffle_null_95.iloc[0]) else f3(sp.shuffle_null_95.iloc[0])}
+        layers[b] = {int(L): (None if pd.isna(v) else f3(v)) for L, v in zip(am[(am.b == sh) & (am.scheme == "cv")].layer, am[(am.b == sh) & (am.scheme == "cv")].auroc_within)}
+        q = ap_[ap_.b == sh].sort_values("t")
+        if len(q): prefix[b] = {"t": [int(t) for t in q.t], "auc": [None if pd.isna(v) else f3(v) for v in q.auroc], "null": [None if pd.isna(v) else f3(v) for v in q.null95], "pairs": int(q.pairs.iloc[0])}
+    dirs11 = {"behaviors": TR["behaviors"], "short": SHORT, "n_prompts": TR["n_prompts"], "own": own, "layers": layers, "prefix": prefix,
+              "transfer": {a: {b: f3(v) for b, v in row.items()} for a, row in TR["transfer"].items()}, "cv_diag": {b: f3(v) for b, v in TR["cv_diag"].items()},
+              "lobo": {b: {"auroc": f3(v["auroc"]), "null95": f3(v["null95"]), "cos_own": f3(v["cos_own"]), "pairs": int(v["pairs"])} for b, v in TR["lobo"].items()},
+              "cos": {a: {b: f3(v) for b, v in row.items()} for a, row in TR["cos"].items()}, "cos_null95": {a: {b: f3(v) for b, v in row.items()} for a, row in TR["cos_null95"].items()},
+              "cos_axis": {b: {"cos": f3(v["cos_axis"]), "null95": f3(v["null95"])} for b, v in TR["cos_axis"].items()}}
+except FileNotFoundError as e:
+    print("dirs11: skipped,", e)
+
 # ---- eval B (explanation): the results table of findings/chive/report.md (written by the CHIVE session), parsed as is
 chive = None
 try:
@@ -254,7 +301,7 @@ except FileNotFoundError as e:
 
 titles = {b["id"]: b["title"] for b in json.load(open(f"{args.out}/index.json"))["behaviors"]}
 json.dump({"titles": titles, "within": within, "fork": fork, "stop": stop, "axis": {"tau": 8.52, "mu": 11.13},
-           "dirs": dirs, "shared": shared, "abl": abl, "nlab": nlab, "mon": mon, "evalc": evalc, "chive": chive},
+           "dirs": dirs, "shared": shared, "abl": abl, "nlab": nlab, "mon": mon, "evalc": evalc, "chive": chive, "axis": axis, "dirs11": dirs11},
           open(f"{args.out}/compare.json", "w"), separators=(",", ":"))
 if mon: print("mon:", [(r["id"], r["auroc"] and r["auroc"][0], r["partial"] and r["partial"][0]) for r in mon["rows"]])
 print("within all:", within["all"])

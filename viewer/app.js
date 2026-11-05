@@ -135,7 +135,7 @@ function renderBehavior(b) {
 }
 const METHODS = '__methods';
 // Compare-methods subtabs: each pane lists the figures it holds, drawn when the pane is shown (hidden panes have no width).
-const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figEvalC, figStop], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [figChive], why: () => [], table: () => [] };
+const SUBS = { warn: () => [figMon, figFork, figDirs], stop: () => [figEvalC], dir: () => [figDirOwn, figDirTransfer, figDirLayers, figDirPrefix], axis: () => [figStop, figAxis], olens: () => [figAbl, figNlab], shared: () => [figShared], edits: () => [figChive], why: () => [], table: () => [] };
 function showSub(k) {
   if (!SUBS[k]) k = 'stop';
   state.sub = k;
@@ -926,6 +926,159 @@ function figChive() {
   if (!narrow) g += tx(xr, top - 8, 'vs transcript', 'axt', 'end');
   g += tx((x0 + x1) / 2, bot + 36, narrow ? 'Stratified AUROC, TRUE vs FALSE edits' : 'How well Opus separates edits that change the rate from edits that do not (stratified AUROC)', 'axt', 'middle');
   setSVG(id, W, bot + 44, g);
+}
+
+function figAxis() {
+  const id = 'fig-axis', X = CMP.axis;
+  if (!X) { $(id).closest('figure').hidden = true; return; }
+  const W = figW(id), narrow = W < 600;
+  const gap = 44, pw = narrow ? W - 50 : (W - 46 - gap - 30) / 2, ph = 190, top = 28;
+  const BEH = ['denying-ai-identity', 'false-physical-embodiment', 'fabricated-code-execution', 'laser-at-aircraft'];
+  const BC = { 'denying-ai-identity': '--hot', 'false-physical-embodiment': '--accent', 'fabricated-code-execution': '--ok', 'laser-at-aircraft': '--muted' };
+  const BL = { 'denying-ai-identity': 'Denying AI', 'false-physical-embodiment': 'Claiming a body', 'fabricated-code-execution': 'Fake code execution', 'laser-at-aircraft': 'Laser at aircraft' };
+  const rungs = ['C2_p25', 'C2_p50', 'C2_p75'], RL = { C2_p25: '25th', C2_p50: '50th', C2_p75: '75th' };
+  const spread = (items, min) => {  // push label y positions apart, top to bottom
+    const o = items.slice().sort((p, q) => p.y - q.y);
+    for (let i = 1; i < o.length; i++) if (o[i].y - o[i - 1].y < min) o[i].y = o[i - 1].y + min;
+    return o;
+  };
+  let g = '';
+  // panel A: rate against cap strength
+  { const x0 = 46, x1 = x0 + pw, t0 = top, bot = t0 + ph, ymax = 0.45;
+    const xs = i => x0 + 18 + (pw - (narrow ? 36 : 120)) * i / rungs.length, ys = v => bot - ph * Math.min(v, ymax) / ymax;
+    g += tx(x0, t0 - 12, narrow ? 'A. Behavior rate against cap strength' : 'A. Behavior rate as the cap tightens', 'ptitle');
+    for (const t of [0, 0.1, 0.2, 0.3, 0.4]) g += ln(x0, ys(t), x1, ys(t), t ? '--rule' : '--faint', t ? 'stroke-dasharray="2 4"' : '') + tx(x0 - 6, ys(t) + 4, `${Math.round(t * 100)}%`, '', 'end');
+    const gx = (xs(1) + xs(2)) / 2;
+    g += `<rect x="${gx}" y="${t0}" width="${xs(3) + 14 - gx}" height="${ph}" style="fill:var(--ink)" fill-opacity="0.05"/>` + tx(gx + 4, t0 + 12, 'over the damage gate', 'n');
+    const labs = ['No cap', ...rungs.map(r => `${RL[r]} pct`)], dmgs = ['0', ...rungs.map(r => X.ladder[r].damage.toFixed(3))];
+    labs.forEach((l, i) => { g += tx(xs(i), bot + 16, l, narrow ? 'glab s' : 'glab', 'middle') + tx(xs(i), bot + 30, dmgs[i], 'n', 'middle'); });
+    g += tx(x0 - 6, bot + 30, 'damage', 'n', 'end');
+    const ends = [];
+    for (const b of BEH) {
+      const L = X.ladder[rungs[0]].by[b]; if (!L) continue;
+      const vals = [L.clean, ...rungs.map(r => X.ladder[r].by[b].arm8)];
+      g += `<path d="M${vals.map((v, i) => `${xs(i)},${ys(v)}`).join('L')}" fill="none" style="stroke:var(${BC[b]})" stroke-width="1.6" stroke-opacity="0.9"/>`;
+      vals.forEach((v, i) => { g += dot(xs(i), ys(v), BC[b], `${BL[b]} (${L.n} prompts), ${labs[i]}: ${pct(v)}`); });
+      ends.push({ y: ys(vals[3]), lab: BL[b], cls: 'n' });
+    }
+    const pv = [X.clean, ...rungs.map(r => X.ladder[r].arm8)];
+    g += `<path d="M${pv.map((v, i) => `${xs(i)},${ys(v)}`).join('L')}" fill="none" style="stroke:var(--ink)" stroke-width="2.4"/>`;
+    pv.forEach((v, i) => { const r = rungs[i - 1]; if (r) g += ln(xs(i), ys(X.ladder[r].lo), xs(i), ys(X.ladder[r].hi), '--ink', 'stroke-width="1.2" stroke-opacity="0.5"'); g += dot(xs(i), ys(v), '--ink', `All four behaviors pooled, ${labs[i]}: ${pct(v)}${r ? ` [${pct(X.ladder[r].lo)}, ${pct(X.ladder[r].hi)}]; damage ${X.ladder[r].damage} nats/token` : ''}`, 'square'); });
+    ends.push({ y: ys(pv[3]), lab: 'Pooled', cls: 'lab' });
+    if (!narrow) for (const e of spread(ends, 13)) g += tx(xs(3) + 9, e.y + 4, e.lab, e.cls);
+  }
+  // panel B: drop against damage, every rung and control
+  { const x0 = narrow ? 46 : 46 + pw + gap + 30, x1 = x0 + pw, t0 = narrow ? top + ph + 72 : top, bot = t0 + ph;
+    const lmin = Math.log10(5e-5), lmax = Math.log10(0.07), xs = d => x0 + (x1 - x0) * (Math.log10(Math.max(d, 5e-5)) - lmin) / (lmax - lmin);
+    const ymin = -0.25, ymax = 1.0, ys = v => bot - ph * (Math.max(ymin, Math.min(ymax, v)) - ymin) / (ymax - ymin);
+    g += tx(x0, t0 - 12, narrow ? 'B. Drop against damage, every edit' : 'B. Drop in the behavior against damage, every edit and control', 'ptitle');
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) g += ln(x0, ys(t), x1, ys(t), t ? '--rule' : '--faint', t ? 'stroke-dasharray="2 4"' : '') + tx(x0 - 6, ys(t) + 4, `${Math.round(t * 100)}%`, '', 'end');
+    for (const [d, l] of [[1e-4, '.0001'], [1e-3, '.001'], [1e-2, '.01'], [5e-2, '.05']]) g += ln(xs(d), bot, xs(d), bot + 4, '--rule') + tx(xs(d), bot + 16, l, '', 'middle');
+    g += ln(xs(X.gate), t0, xs(X.gate), bot, '--ink', 'stroke-dasharray="5 3" stroke-opacity="0.5"') + tx(xs(X.gate) + 4, bot - 6, 'gate .02', 'n');
+    g += tx((x0 + x1) / 2, bot + 32, narrow ? 'Damage, nats per token (log scale)' : 'Damage: extra next-token loss on capability text and benign chat (nats per token, log scale)', 'axt', 'middle');
+    const AC = { C1a: '--hot', R: '--hot', C7: '--hot', C1b: '--hot', C2: '--accent', C3: '--ok', C6: '--muted', C5: '--muted' };
+    // label, dx, dy, anchor per point (chosen by hand so nothing overlaps)
+    const SL = { C1a_top10: ['top-10', 7, 4, 'start'], C1a_top100: ['top-100', 0, -8, 'middle'], C1a_top1000: ['top-1000', -8, 4, 'end'],
+      C2_p25: ['axis 25th', 7, 12, 'start'], C2_p50: ['axis 50th', -7, 12, 'end'], C2_p75: ['axis 75th', 7, 4, 'start'],
+      C3_ceil_p50: ['weird dir.', 7, 4, 'start'], C6_ceil_p25: ['J-lens', 7, 4, 'start'], C5_with_general: ['SAE', 7, 4, 'start'],
+      C7_olens100: ['O-lens 100', -7, -9, 'end'], C1b_sharedmid100: ['shared mid', 7, 12, 'start'], R: ['random 100 of top-1000', 4, 22, 'middle'] };
+    const pts = X.points.filter(q => q.damage != null && q.kind !== 'secondary');
+    for (const q of pts.filter(q => q.kind === 'control')) g += dot(xs(q.damage), ys(q.drop), AC[q.arm] || '--muted', `${esc(q.label)}: drop ${pct(q.drop)}, damage ${q.damage}`, 'circle', true);
+    const line = (arm, c) => { const o = pts.filter(q => q.arm === arm && q.kind !== 'control').sort((a, b) => a.damage - b.damage); return `<path d="M${o.map(q => `${xs(q.damage)},${ys(q.drop)}`).join('L')}" fill="none" style="stroke:var(${c})" stroke-width="1.6"/>`; };
+    g += line('C2', '--accent') + line('C1a', '--hot');
+    for (const q of pts.filter(q => q.kind !== 'control')) {
+      const key = q.arm === 'R' ? 'R' : `${q.arm}_${(q.label.match(/\((.+)\)$/) || [])[1]}`, L = SL[key];
+      g += ln(xs(q.damage), ys(q.lo), xs(q.damage), ys(q.hi), AC[q.arm] || '--muted', 'stroke-width="1.1" stroke-opacity="0.35"');
+      g += dot(xs(q.damage), ys(q.drop), AC[q.arm] || '--muted', `${esc(q.label)}: drop ${pct(q.drop)} [${pct(q.lo)}, ${pct(q.hi)}], damage ${q.damage}`, q.arm === 'C2' ? 'square' : 'circle');
+      if (L && (!narrow || q.arm === 'C2' || q.arm === 'C1a')) g += tx(xs(q.damage) + L[1], ys(q.drop) + L[2], L[0], 'n', L[3]);
+    }
+  }
+  setSVG(id, W, narrow ? top + 2 * ph + 72 + 44 : top + ph + 44, g);
+}
+
+const DL = { 'recommends-drunk-driving': 'Drunk driving', 'chemtrails-assertion': 'Chemtrails', 'cutting-instructions': 'Cutting', 'laser-at-aircraft': 'Laser at aircraft', 'claims-called-911': 'Called 911', 'denying-ai-identity': 'Denying AI', 'fabricated-code-execution': 'Fake code execution', 'false-physical-embodiment': 'Claiming a body', 'purging-advice': 'Purging', 'unsolicited-sexual-advances': 'Sexual advances', 'extreme-calorie-restriction': 'Calorie restriction' };
+const heatCell = (x, y, w, h, v, title, showText, border) => {  // AUROC cell: blue above chance, red below, saturation by distance from .5
+  if (v == null) return `<text x="${x + w / 2}" y="${y + h / 2 + 4}" class="n" text-anchor="middle">–</text>`;
+  const c = v >= 0.5 ? '--accent' : '--hot', op = Math.min(1, Math.abs(v - 0.5) / 0.45) * 0.85 + 0.04;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" style="fill:var(${c})" fill-opacity="${op.toFixed(2)}"${border ? ' stroke="var(--ink)" stroke-width="1.2" fill="none"' : ''}><title>${title}</title></rect>` +
+    (border ? `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" style="stroke:var(--ink)" stroke-width="1.2"/>` : '') +
+    (showText ? `<text x="${x + w / 2}" y="${y + h / 2 + 4}" class="hv" text-anchor="middle" style="fill:var(${op > 0.5 ? '--sheet' : '--ink'})">${v.toFixed(2).replace(/^0/, '')}</text>` : '');
+};
+function figDirOwn() {
+  const id = 'fig-dir-own', D = CMP.dirs11;
+  if (!D) { $(id).closest('figure').hidden = true; return; }
+  const W = figW(id), narrow = W < 560;
+  const labW = narrow ? 112 : 150, numW = narrow ? 0 : 70, x0 = labW + 8, x1 = W - numW - 8, rh = 24, top = 24;
+  const lo = 0.4, hi = 1.0, x = v => x0 + (x1 - x0) * (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo);
+  const order = D.behaviors.slice().sort((a, b) => (D.own[b].cv ?? 0) - (D.own[a].cv ?? 0));
+  const bot = top + order.length * rh;
+  let g = '';
+  for (const t of [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]) g += ln(x(t), top, x(t), bot + 4, t === 0.5 ? '--faint' : '--rule', t === 0.5 ? '' : 'stroke-dasharray="2 4"') + tx(x(t), bot + 18, t.toFixed(1), '', 'middle');
+  order.forEach((b, k) => {
+    const yc = top + k * rh + rh / 2, o = D.own[b], L = D.lobo[b];
+    g += tx(0, yc + 4, DL[b] || b, 'lab');
+    if (o.cv_shuf95 != null) g += ln(x(o.cv_shuf95), yc - 6, x(o.cv_shuf95), yc + 6, '--faint', 'stroke-width="2"');
+    if (L) g += dot(x(L.auroc), yc + 5, '--accent', `${DL[b]}: direction pooled from the other ten behaviors, AUROC ${L.auroc.toFixed(2)} (label-shuffle 95th percentile ${L.null95.toFixed(2)}; cosine with the own direction ${L.cos_own.toFixed(2)})`);
+    if (o.split != null) g += dot(x(o.split), yc - 5, '--ok', `${DL[b]}: own direction fit on discovery prompts, tested on held-out prompts: AUROC ${o.split.toFixed(2)} over ${o.split_pairs} pairs`, 'square', true);
+    if (o.cv != null) g += dot(x(o.cv), yc - 5, '--ok', `${DL[b]}: own direction, 5-fold cross-validation over prompts: AUROC ${o.cv.toFixed(2)} over ${o.cv_pairs} pairs (label-shuffle 95th percentile ${o.cv_shuf95}, random-direction 95th percentile ${o.cv_rand95})`);
+    if (!narrow) g += tx(W - 2, yc + 4, `${D.n_prompts[b]} prompts`, 'n', 'end');
+  });
+  g += tx((x0 + x1) / 2, bot + 36, 'Within-prompt AUROC: share of (weird, normal) reply pairs to the same prompt where the weird reply scores higher (0.5 = chance)', 'axt', 'middle');
+  setSVG(id, W, bot + 44, g);
+}
+function figDirTransfer() {
+  const id = 'fig-dir-transfer', D = CMP.dirs11;
+  if (!D) { $(id).closest('figure').hidden = true; return; }
+  const W = figW(id), narrow = W < 560, B = D.behaviors;
+  const labW = narrow ? 92 : 150, top = narrow ? 64 : 70, cw = Math.min(54, (W - labW - 6) / B.length), ch = narrow ? 20 : 26, x0 = labW + 4;
+  const S = { 'recommends-drunk-driving': 'Drunk', 'chemtrails-assertion': 'Chem.', 'cutting-instructions': 'Cutting', 'laser-at-aircraft': 'Laser', 'claims-called-911': '911', 'denying-ai-identity': 'Deny AI', 'fabricated-code-execution': 'Code', 'false-physical-embodiment': 'Body', 'purging-advice': 'Purging', 'unsolicited-sexual-advances': 'Sexual', 'extreme-calorie-restriction': 'Calorie' };
+  let g = tx(x0 + cw * B.length / 2, 14, 'Replies scored (behavior)', 'ptitle', 'middle');
+  B.forEach((b, j) => { g += `<text x="${x0 + j * cw + cw / 2}" y="${top - 6}" class="n" text-anchor="start" transform="rotate(-40 ${x0 + j * cw + cw / 2} ${top - 6})">${S[b]}</text>`; });
+  const rows = [...B.map(a => ({ a, lab: DL[a], get: b => a === b ? D.cv_diag[b] : D.transfer[a][b], diag: true })), { a: null, lab: 'Other ten pooled', get: b => D.lobo[b].auroc }];
+  rows.forEach((r, i) => {
+    const y = top + i * ch + (r.a ? 0 : 8);
+    g += tx(x0 - 6, y + ch / 2 + 4, r.lab, narrow ? 'lab s' : 'lab', 'end');
+    B.forEach((b, j) => { const v = r.get(b); g += heatCell(x0 + j * cw, y, cw - 1, ch - 1, v, r.a ? `Direction of ${DL[r.a]} scoring ${DL[b]} replies: AUROC ${v == null ? 'n/a' : v.toFixed(2)}${r.a === b ? ' (5-fold cross-validation over prompts)' : ''}` : `Mean of the other ten behaviors' directions scoring ${DL[b]} replies: AUROC ${v.toFixed(2)} (label-shuffle 95th percentile ${D.lobo[b].null95.toFixed(2)})`, cw >= 30, r.a === b); });
+  });
+  const H = top + rows.length * ch + 8;
+  g += `<text x="12" y="${top + B.length * ch / 2}" class="ptitle" text-anchor="middle" transform="rotate(-90 12 ${top + B.length * ch / 2})">Direction of (behavior)</text>`;
+  setSVG(id, W, H + 6, g);
+}
+function figDirLayers() {
+  const id = 'fig-dir-layers', D = CMP.dirs11;
+  if (!D) { $(id).closest('figure').hidden = true; return; }
+  const W = figW(id), narrow = W < 560, B = D.behaviors, LS = [16, 24, 32, 40, 48, 56];
+  const labW = narrow ? 112 : 150, top = 30, cw = Math.min(64, (W - labW - 10) / LS.length), ch = narrow ? 20 : 24, x0 = labW + 4;
+  let g = '';
+  LS.forEach((L, j) => { g += tx(x0 + j * cw + cw / 2, top - 8, `block ${L}`, 'n', 'middle'); });
+  B.forEach((b, i) => {
+    const y = top + i * ch; g += tx(x0 - 6, y + ch / 2 + 4, DL[b], narrow ? 'lab s' : 'lab', 'end');
+    LS.forEach((L, j) => { const v = D.layers[b][L]; g += heatCell(x0 + j * cw, y, cw - 1, ch - 1, v, `${DL[b]}, block ${L}: cross-validated AUROC ${v == null ? 'n/a' : v.toFixed(2)}`, true, L === 48); });
+  });
+  setSVG(id, W, top + B.length * ch + 8, g);
+}
+function figDirPrefix() {
+  const id = 'fig-dir-prefix', D = CMP.dirs11;
+  if (!D) { $(id).closest('figure').hidden = true; return; }
+  const W = figW(id), order = D.behaviors.filter(b => D.prefix[b]);
+  const cols = W >= 760 ? 4 : W >= 520 ? 3 : 2, padL = 28, gapX = 22, pw = (W - cols * padL - (cols - 1) * gapX - 6) / cols, ph = 86, gapY = 54, top = 26;
+  const lo = 0.4, hi = 1.0;
+  let g = '';
+  order.forEach((b, k) => {
+    const d = D.prefix[b], cx = padL + (k % cols) * (pw + padL + gapX), cy = top + Math.floor(k / cols) * (ph + gapY);
+    const xs = t => cx + pw * Math.log2(t) / 10, ys = v => cy + ph * (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo));
+    g += tx(cx, cy - 10, `${DL[b]} <tspan class="n">${D.n_prompts[b]}</tspan>`, 'ptitle s');
+    for (const v of [0.5, 0.75, 1]) g += ln(cx, ys(v), cx + pw, ys(v), v === 0.5 ? '--faint' : '--rule', v === 0.5 ? '' : 'stroke-dasharray="2 4"') + tx(cx - 5, ys(v) + 4, v === 1 ? '1' : v.toFixed(2).replace(/^0/, ''), 'n', 'end');
+    for (const t of [1, 8, 64, 512]) g += ln(xs(t), cy + ph, xs(t), cy + ph + 4, '--faint') + tx(xs(t), cy + ph + 15, t, 'n', 'middle');
+    const pts = d.t.map((t, i) => [t, d.auc[i], d.null[i]]).filter(q => q[1] != null);
+    const path = (ix, c, extra) => `<path d="M${pts.map(q => `${xs(q[0])},${ys(q[ix])}`).join('L')}" fill="none" style="stroke:var(${c})" ${extra}/>`;
+    if (pts.some(q => q[2] != null)) g += `<path d="M${pts.filter(q => q[2] != null).map(q => `${xs(q[0])},${ys(q[2])}`).join('L')}" fill="none" style="stroke:var(--faint)" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+    g += path(1, '--ok', 'stroke-width="1.6"');
+    g += pts.map(q => dot(xs(q[0]), ys(q[1]), '--ok', `${DL[b]}, first ${q[0]} tokens: AUROC ${q[1].toFixed(2)}${q[2] != null ? ` (shuffled-label 95th percentile ${q[2].toFixed(2)})` : ''}`)).join('');
+  });
+  const H = top + Math.ceil(order.length / cols) * (ph + gapY) - gapY + 44;
+  g += tx(W / 2, H - 6, 'Reply tokens read (log scale); y: cross-validated AUROC at block 48, 0.5 = chance', 'axt', 'middle');
+  setSVG(id, W, H, g);
 }
 
 function figStop() {

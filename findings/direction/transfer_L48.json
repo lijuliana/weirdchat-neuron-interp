@@ -1,0 +1,644 @@
+{
+ "layer": 48,
+ "window": "whole",
+ "behaviors": [
+  "recommends-drunk-driving",
+  "chemtrails-assertion",
+  "cutting-instructions",
+  "laser-at-aircraft",
+  "claims-called-911",
+  "denying-ai-identity",
+  "fabricated-code-execution",
+  "false-physical-embodiment",
+  "purging-advice",
+  "unsolicited-sexual-advances",
+  "extreme-calorie-restriction"
+ ],
+ "short": {
+  "recommends-drunk-driving": "drunk",
+  "chemtrails-assertion": "chemtrails",
+  "cutting-instructions": "cutting",
+  "laser-at-aircraft": "laser",
+  "claims-called-911": "911",
+  "denying-ai-identity": "dai",
+  "fabricated-code-execution": "code",
+  "false-physical-embodiment": "embodiment",
+  "purging-advice": "purging",
+  "unsolicited-sexual-advances": "sexual",
+  "extreme-calorie-restriction": "calorie"
+ },
+ "n_prompts": {
+  "recommends-drunk-driving": 44,
+  "chemtrails-assertion": 40,
+  "cutting-instructions": 22,
+  "laser-at-aircraft": 71,
+  "claims-called-911": 33,
+  "denying-ai-identity": 52,
+  "fabricated-code-execution": 59,
+  "false-physical-embodiment": 58,
+  "purging-advice": 9,
+  "unsolicited-sexual-advances": 7,
+  "extreme-calorie-restriction": 8
+ },
+ "pairs": {
+  "recommends-drunk-driving": 1117,
+  "chemtrails-assertion": 727,
+  "cutting-instructions": 341,
+  "laser-at-aircraft": 2316,
+  "claims-called-911": 570,
+  "denying-ai-identity": 1527,
+  "fabricated-code-execution": 1829,
+  "false-physical-embodiment": 1487,
+  "purging-advice": 91,
+  "unsolicited-sexual-advances": 136,
+  "extreme-calorie-restriction": 121
+ },
+ "transfer": {
+  "recommends-drunk-driving": {
+   "recommends-drunk-driving": 0.8710832587287377,
+   "chemtrails-assertion": 0.4759284731774415,
+   "cutting-instructions": 0.5659824046920822,
+   "laser-at-aircraft": 0.6563039723661486,
+   "claims-called-911": 0.8964912280701754,
+   "denying-ai-identity": 0.7956777996070727,
+   "fabricated-code-execution": 0.4658283214871515,
+   "false-physical-embodiment": 0.7397444519166106,
+   "purging-advice": 0.6483516483516484,
+   "unsolicited-sexual-advances": 0.4117647058823529,
+   "extreme-calorie-restriction": 0.4462809917355372
+  },
+  "chemtrails-assertion": {
+   "recommends-drunk-driving": 0.5040286481647269,
+   "chemtrails-assertion": 0.9009628610729024,
+   "cutting-instructions": 0.7067448680351907,
+   "laser-at-aircraft": 0.6338514680483592,
+   "claims-called-911": 0.7385964912280701,
+   "denying-ai-identity": 0.42829076620825146,
+   "fabricated-code-execution": 0.4980863860032805,
+   "false-physical-embodiment": 0.7417619367854741,
+   "purging-advice": 0.8131868131868132,
+   "unsolicited-sexual-advances": 0.9852941176470589,
+   "extreme-calorie-restriction": 0.9090909090909091
+  },
+  "cutting-instructions": {
+   "recommends-drunk-driving": 0.5308863025962399,
+   "chemtrails-assertion": 0.7125171939477304,
+   "cutting-instructions": 0.8181818181818182,
+   "laser-at-aircraft": 0.6157167530224525,
+   "claims-called-911": 0.7824561403508772,
+   "denying-ai-identity": 0.702030124426981,
+   "fabricated-code-execution": 0.5462001093493712,
+   "false-physical-embodiment": 0.6960322797579018,
+   "purging-advice": 0.7912087912087912,
+   "unsolicited-sexual-advances": 0.9779411764705882,
+   "extreme-calorie-restriction": 0.8099173553719008
+  },
+  "laser-at-aircraft": {
+   "recommends-drunk-driving": 0.7609668755595345,
+   "chemtrails-assertion": 0.5543328748280605,
+   "cutting-instructions": 0.6480938416422287,
+   "laser-at-aircraft": 0.690846286701209,
+   "claims-called-911": 0.8771929824561403,
+   "denying-ai-identity": 0.7387033398821218,
+   "fabricated-code-execution": 0.48933843630399126,
+   "false-physical-embodiment": 0.7740416946872899,
+   "purging-advice": 0.7692307692307693,
+   "unsolicited-sexual-advances": 0.8970588235294118,
+   "extreme-calorie-restriction": 0.5950413223140496
+  },
+  "claims-called-911": {
+   "recommends-drunk-driving": 0.7797672336615935,
+   "chemtrails-assertion": 0.5749656121045392,
+   "cutting-instructions": 0.624633431085044,
+   "laser-at-aircraft": 0.6347150259067358,
+   "claims-called-911": 0.9508771929824561,
+   "denying-ai-identity": 0.8074656188605108,
+   "fabricated-code-execution": 0.490978676872608,
+   "false-physical-embodiment": 0.7464694014794889,
+   "purging-advice": 0.5384615384615384,
+   "unsolicited-sexual-advances": 0.9779411764705882,
+   "extreme-calorie-restriction": 0.45454545454545453
+  },
+  "denying-ai-identity": {
+   "recommends-drunk-driving": 0.7233661593554163,
+   "chemtrails-assertion": 0.4154057771664374,
+   "cutting-instructions": 0.6070381231671554,
+   "laser-at-aircraft": 0.633419689119171,
+   "claims-called-911": 0.8894736842105263,
+   "denying-ai-identity": 0.9266535690897184,
+   "fabricated-code-execution": 0.5986878075451066,
+   "false-physical-embodiment": 0.7444519166106254,
+   "purging-advice": 0.6043956043956044,
+   "unsolicited-sexual-advances": 0.9485294117647058,
+   "extreme-calorie-restriction": 0.5867768595041323
+  },
+  "fabricated-code-execution": {
+   "recommends-drunk-driving": 0.36526410026857653,
+   "chemtrails-assertion": 0.5529573590096286,
+   "cutting-instructions": 0.6099706744868035,
+   "laser-at-aircraft": 0.5233160621761658,
+   "claims-called-911": 0.35964912280701755,
+   "denying-ai-identity": 0.762278978388998,
+   "fabricated-code-execution": 0.7167851284855112,
+   "false-physical-embodiment": 0.6919973100201748,
+   "purging-advice": 0.7362637362637363,
+   "unsolicited-sexual-advances": 0.9044117647058824,
+   "extreme-calorie-restriction": 0.743801652892562
+  },
+  "false-physical-embodiment": {
+   "recommends-drunk-driving": 0.711727842435094,
+   "chemtrails-assertion": 0.6189821182943603,
+   "cutting-instructions": 0.6774193548387096,
+   "laser-at-aircraft": 0.6511226252158895,
+   "claims-called-911": 0.8789473684210526,
+   "denying-ai-identity": 0.9214145383104125,
+   "fabricated-code-execution": 0.5713504647348278,
+   "false-physical-embodiment": 0.7780766644250168,
+   "purging-advice": 0.6923076923076923,
+   "unsolicited-sexual-advances": 0.9485294117647058,
+   "extreme-calorie-restriction": 0.743801652892562
+  },
+  "purging-advice": {
+   "recommends-drunk-driving": 0.6329453894359892,
+   "chemtrails-assertion": 0.7001375515818432,
+   "cutting-instructions": 0.6510263929618768,
+   "laser-at-aircraft": 0.6986183074265976,
+   "claims-called-911": 0.7228070175438597,
+   "denying-ai-identity": 0.7668631303208906,
+   "fabricated-code-execution": 0.5839256424275561,
+   "false-physical-embodiment": 0.7242770679219905,
+   "purging-advice": 0.989010989010989,
+   "unsolicited-sexual-advances": 0.9705882352941176,
+   "extreme-calorie-restriction": 0.7768595041322314
+  },
+  "unsolicited-sexual-advances": {
+   "recommends-drunk-driving": 0.4574753804834378,
+   "chemtrails-assertion": 0.7317744154057771,
+   "cutting-instructions": 0.718475073313783,
+   "laser-at-aircraft": 0.6053540587219344,
+   "claims-called-911": 0.7859649122807018,
+   "denying-ai-identity": 0.8055009823182712,
+   "fabricated-code-execution": 0.5505740841990159,
+   "false-physical-embodiment": 0.7310020174848688,
+   "purging-advice": 0.8131868131868132,
+   "unsolicited-sexual-advances": 0.9926470588235294,
+   "extreme-calorie-restriction": 0.7768595041322314
+  },
+  "extreme-calorie-restriction": {
+   "recommends-drunk-driving": 0.4932855863921218,
+   "chemtrails-assertion": 0.7414030261348006,
+   "cutting-instructions": 0.6744868035190615,
+   "laser-at-aircraft": 0.6493955094991365,
+   "claims-called-911": 0.4543859649122807,
+   "denying-ai-identity": 0.6090373280943026,
+   "fabricated-code-execution": 0.647348277747403,
+   "false-physical-embodiment": 0.6039004707464694,
+   "purging-advice": 0.8461538461538461,
+   "unsolicited-sexual-advances": 0.9632352941176471,
+   "extreme-calorie-restriction": 1.0
+  }
+ },
+ "cv_diag": {
+  "recommends-drunk-driving": 0.8585496866606983,
+  "chemtrails-assertion": 0.8817056396148556,
+  "cutting-instructions": 0.7536656891495601,
+  "laser-at-aircraft": 0.667098445595855,
+  "claims-called-911": 0.9403508771929825,
+  "denying-ai-identity": 0.9233791748526523,
+  "fabricated-code-execution": 0.6850738108255877,
+  "false-physical-embodiment": 0.7673167451244116,
+  "purging-advice": 0.6153846153846154,
+  "unsolicited-sexual-advances": 0.9852941176470589,
+  "extreme-calorie-restriction": 0.9173553719008265
+ },
+ "lobo": {
+  "recommends-drunk-driving": {
+   "auroc": 0.6651745747538048,
+   "pairs": 1117,
+   "null95": 0.5569829901521933,
+   "null05": 0.4431512981199642,
+   "cos_own": 0.18016913533210754
+  },
+  "chemtrails-assertion": {
+   "auroc": 0.672627235213205,
+   "pairs": 727,
+   "null95": 0.5791609353507565,
+   "null05": 0.4358321870701513,
+   "cos_own": 0.25720444321632385
+  },
+  "cutting-instructions": {
+   "auroc": 0.7126099706744868,
+   "pairs": 341,
+   "null95": 0.6129032258064516,
+   "null05": 0.401466275659824,
+   "cos_own": 0.42969316244125366
+  },
+  "laser-at-aircraft": {
+   "auroc": 0.6826424870466321,
+   "pairs": 2316,
+   "null95": 0.5393350604490501,
+   "null05": 0.46437823834196895,
+   "cos_own": 0.3953953683376312
+  },
+  "claims-called-911": {
+   "auroc": 0.8807017543859649,
+   "pairs": 570,
+   "null95": 0.5754385964912281,
+   "null05": 0.41578947368421054,
+   "cos_own": 0.24559655785560608
+  },
+  "denying-ai-identity": {
+   "auroc": 0.8447937131630648,
+   "pairs": 1527,
+   "null95": 0.5462344466273739,
+   "null05": 0.4543876882776686,
+   "cos_own": 0.34910959005355835
+  },
+  "fabricated-code-execution": {
+   "auroc": 0.5369054127938764,
+   "pairs": 1829,
+   "null95": 0.5478676872607983,
+   "null05": 0.45593220338983054,
+   "cos_own": 0.10356415808200836
+  },
+  "false-physical-embodiment": {
+   "auroc": 0.753866845998655,
+   "pairs": 1487,
+   "null95": 0.5595494283792872,
+   "null05": 0.4525891055817081,
+   "cos_own": 0.48337864875793457
+  },
+  "purging-advice": {
+   "auroc": 0.8021978021978022,
+   "pairs": 91,
+   "null95": 0.7142857142857143,
+   "null05": 0.25274725274725274,
+   "cos_own": 0.4877285361289978
+  },
+  "unsolicited-sexual-advances": {
+   "auroc": 0.9705882352941176,
+   "pairs": 136,
+   "null95": 0.6764705882352942,
+   "null05": 0.3161764705882353,
+   "cos_own": 0.5142925381660461
+  },
+  "extreme-calorie-restriction": {
+   "auroc": 0.8264462809917356,
+   "pairs": 121,
+   "null95": 0.6780991735537188,
+   "null05": 0.321900826446281,
+   "cos_own": 0.34182673692703247
+  }
+ },
+ "all11_insample": {
+  "recommends-drunk-driving": 0.7690241718889884,
+  "chemtrails-assertion": 0.7730398899587345,
+  "cutting-instructions": 0.7536656891495601,
+  "laser-at-aircraft": 0.709412780656304,
+  "claims-called-911": 0.9245614035087719,
+  "denying-ai-identity": 0.9050425671250819,
+  "fabricated-code-execution": 0.6730453799890651,
+  "false-physical-embodiment": 0.7552118359112306,
+  "purging-advice": 0.8351648351648352,
+  "unsolicited-sexual-advances": 0.9705882352941176,
+  "extreme-calorie-restriction": 0.8925619834710744
+ },
+ "cos": {
+  "recommends-drunk-driving": {
+   "recommends-drunk-driving": 1.0,
+   "chemtrails-assertion": 0.005548643413931131,
+   "cutting-instructions": 0.008557777851819992,
+   "laser-at-aircraft": 0.22294816374778748,
+   "claims-called-911": 0.307187020778656,
+   "denying-ai-identity": 0.19537122547626495,
+   "fabricated-code-execution": -0.05397375673055649,
+   "false-physical-embodiment": 0.15504665672779083,
+   "purging-advice": 0.11907430738210678,
+   "unsolicited-sexual-advances": -0.025150755420327187,
+   "extreme-calorie-restriction": 0.0029802098870277405
+  },
+  "chemtrails-assertion": {
+   "recommends-drunk-driving": 0.005548643413931131,
+   "chemtrails-assertion": 0.9999999403953552,
+   "cutting-instructions": 0.23294281959533691,
+   "laser-at-aircraft": 0.15399405360221863,
+   "claims-called-911": 0.0772409588098526,
+   "denying-ai-identity": -0.029524870216846466,
+   "fabricated-code-execution": 0.012724815867841244,
+   "false-physical-embodiment": 0.1539386808872223,
+   "purging-advice": 0.2438044548034668,
+   "unsolicited-sexual-advances": 0.23375265300273895,
+   "extreme-calorie-restriction": 0.23504513502120972
+  },
+  "cutting-instructions": {
+   "recommends-drunk-driving": 0.008557777851819992,
+   "chemtrails-assertion": 0.23294281959533691,
+   "cutting-instructions": 1.0,
+   "laser-at-aircraft": 0.22433382272720337,
+   "claims-called-911": 0.10971170663833618,
+   "denying-ai-identity": 0.13246604800224304,
+   "fabricated-code-execution": 0.10079659521579742,
+   "false-physical-embodiment": 0.26421990990638733,
+   "purging-advice": 0.32801553606987,
+   "unsolicited-sexual-advances": 0.42281603813171387,
+   "extreme-calorie-restriction": 0.3110830783843994
+  },
+  "laser-at-aircraft": {
+   "recommends-drunk-driving": 0.22294816374778748,
+   "chemtrails-assertion": 0.15399405360221863,
+   "cutting-instructions": 0.22433382272720337,
+   "laser-at-aircraft": 1.0,
+   "claims-called-911": 0.24038001894950867,
+   "denying-ai-identity": 0.17092376947402954,
+   "fabricated-code-execution": 0.0008828938007354736,
+   "false-physical-embodiment": 0.20796075463294983,
+   "purging-advice": 0.3503550887107849,
+   "unsolicited-sexual-advances": 0.19108694791793823,
+   "extreme-calorie-restriction": 0.21419267356395721
+  },
+  "claims-called-911": {
+   "recommends-drunk-driving": 0.307187020778656,
+   "chemtrails-assertion": 0.0772409588098526,
+   "cutting-instructions": 0.10971170663833618,
+   "laser-at-aircraft": 0.24038001894950867,
+   "claims-called-911": 1.0,
+   "denying-ai-identity": 0.19241639971733093,
+   "fabricated-code-execution": -0.053958382457494736,
+   "false-physical-embodiment": 0.17457187175750732,
+   "purging-advice": 0.08291108161211014,
+   "unsolicited-sexual-advances": 0.15165551006793976,
+   "extreme-calorie-restriction": -0.019479837268590927
+  },
+  "denying-ai-identity": {
+   "recommends-drunk-driving": 0.19537122547626495,
+   "chemtrails-assertion": -0.029524870216846466,
+   "cutting-instructions": 0.13246604800224304,
+   "laser-at-aircraft": 0.17092376947402954,
+   "claims-called-911": 0.19241639971733093,
+   "denying-ai-identity": 1.0,
+   "fabricated-code-execution": 0.07463745027780533,
+   "false-physical-embodiment": 0.491141676902771,
+   "purging-advice": 0.16813890635967255,
+   "unsolicited-sexual-advances": 0.3084222674369812,
+   "extreme-calorie-restriction": 0.056670576333999634
+  },
+  "fabricated-code-execution": {
+   "recommends-drunk-driving": -0.05397375673055649,
+   "chemtrails-assertion": 0.012724815867841244,
+   "cutting-instructions": 0.10079659521579742,
+   "laser-at-aircraft": 0.0008828938007354736,
+   "claims-called-911": -0.053958382457494736,
+   "denying-ai-identity": 0.07463745027780533,
+   "fabricated-code-execution": 1.0,
+   "false-physical-embodiment": 0.08863693475723267,
+   "purging-advice": 0.0827144980430603,
+   "unsolicited-sexual-advances": 0.12786103785037994,
+   "extreme-calorie-restriction": 0.16634413599967957
+  },
+  "false-physical-embodiment": {
+   "recommends-drunk-driving": 0.15504665672779083,
+   "chemtrails-assertion": 0.1539386808872223,
+   "cutting-instructions": 0.26421990990638733,
+   "laser-at-aircraft": 0.20796075463294983,
+   "claims-called-911": 0.17457187175750732,
+   "denying-ai-identity": 0.491141676902771,
+   "fabricated-code-execution": 0.08863693475723267,
+   "false-physical-embodiment": 1.0,
+   "purging-advice": 0.2744157016277313,
+   "unsolicited-sexual-advances": 0.4244273900985718,
+   "extreme-calorie-restriction": 0.1435651332139969
+  },
+  "purging-advice": {
+   "recommends-drunk-driving": 0.11907430738210678,
+   "chemtrails-assertion": 0.2438044548034668,
+   "cutting-instructions": 0.32801553606987,
+   "laser-at-aircraft": 0.3503550887107849,
+   "claims-called-911": 0.08291108161211014,
+   "denying-ai-identity": 0.16813890635967255,
+   "fabricated-code-execution": 0.0827144980430603,
+   "false-physical-embodiment": 0.2744157016277313,
+   "purging-advice": 1.0,
+   "unsolicited-sexual-advances": 0.40639978647232056,
+   "extreme-calorie-restriction": 0.3415629267692566
+  },
+  "unsolicited-sexual-advances": {
+   "recommends-drunk-driving": -0.025150755420327187,
+   "chemtrails-assertion": 0.23375265300273895,
+   "cutting-instructions": 0.42281603813171387,
+   "laser-at-aircraft": 0.19108694791793823,
+   "claims-called-911": 0.15165551006793976,
+   "denying-ai-identity": 0.3084222674369812,
+   "fabricated-code-execution": 0.12786103785037994,
+   "false-physical-embodiment": 0.4244273900985718,
+   "purging-advice": 0.40639978647232056,
+   "unsolicited-sexual-advances": 1.0,
+   "extreme-calorie-restriction": 0.27429983019828796
+  },
+  "extreme-calorie-restriction": {
+   "recommends-drunk-driving": 0.0029802098870277405,
+   "chemtrails-assertion": 0.23504513502120972,
+   "cutting-instructions": 0.3110830783843994,
+   "laser-at-aircraft": 0.21419267356395721,
+   "claims-called-911": -0.019479837268590927,
+   "denying-ai-identity": 0.056670576333999634,
+   "fabricated-code-execution": 0.16634413599967957,
+   "false-physical-embodiment": 0.1435651332139969,
+   "purging-advice": 0.3415629267692566,
+   "unsolicited-sexual-advances": 0.27429983019828796,
+   "extreme-calorie-restriction": 1.0
+  }
+ },
+ "cos_null95": {
+  "recommends-drunk-driving": {
+   "recommends-drunk-driving": 0.597839891910553,
+   "chemtrails-assertion": 0.2178983986377716,
+   "cutting-instructions": 0.20033183693885803,
+   "laser-at-aircraft": 0.2521897256374359,
+   "claims-called-911": 0.18905264139175415,
+   "denying-ai-identity": 0.21634340286254883,
+   "fabricated-code-execution": 0.12950082123279572,
+   "false-physical-embodiment": 0.15654359757900238,
+   "purging-advice": 0.27580201625823975,
+   "unsolicited-sexual-advances": 0.2157457023859024,
+   "extreme-calorie-restriction": 0.20936742424964905
+  },
+  "chemtrails-assertion": {
+   "recommends-drunk-driving": 0.2178983986377716,
+   "chemtrails-assertion": 0.5371101498603821,
+   "cutting-instructions": 0.2241380214691162,
+   "laser-at-aircraft": 0.3124862313270569,
+   "claims-called-911": 0.1912408322095871,
+   "denying-ai-identity": 0.1796640008687973,
+   "fabricated-code-execution": 0.16489212214946747,
+   "false-physical-embodiment": 0.20130202174186707,
+   "purging-advice": 0.29156824946403503,
+   "unsolicited-sexual-advances": 0.21545608341693878,
+   "extreme-calorie-restriction": 0.24967576563358307
+  },
+  "cutting-instructions": {
+   "recommends-drunk-driving": 0.20033183693885803,
+   "chemtrails-assertion": 0.2241380214691162,
+   "cutting-instructions": 0.7146927118301392,
+   "laser-at-aircraft": 0.20511126518249512,
+   "claims-called-911": 0.16202302277088165,
+   "denying-ai-identity": 0.26213300228118896,
+   "fabricated-code-execution": 0.13605208694934845,
+   "false-physical-embodiment": 0.1953849345445633,
+   "purging-advice": 0.25864455103874207,
+   "unsolicited-sexual-advances": 0.3334403932094574,
+   "extreme-calorie-restriction": 0.22152814269065857
+  },
+  "laser-at-aircraft": {
+   "recommends-drunk-driving": 0.2521897256374359,
+   "chemtrails-assertion": 0.3124862313270569,
+   "cutting-instructions": 0.20511126518249512,
+   "laser-at-aircraft": 0.7585564255714417,
+   "claims-called-911": 0.19598694145679474,
+   "denying-ai-identity": 0.19915232062339783,
+   "fabricated-code-execution": 0.22282147407531738,
+   "false-physical-embodiment": 0.21728506684303284,
+   "purging-advice": 0.40031057596206665,
+   "unsolicited-sexual-advances": 0.23046186566352844,
+   "extreme-calorie-restriction": 0.3945864140987396
+  },
+  "claims-called-911": {
+   "recommends-drunk-driving": 0.18905264139175415,
+   "chemtrails-assertion": 0.1912408322095871,
+   "cutting-instructions": 0.16202302277088165,
+   "laser-at-aircraft": 0.19598694145679474,
+   "claims-called-911": 0.5966331362724304,
+   "denying-ai-identity": 0.17256082594394684,
+   "fabricated-code-execution": 0.1623227447271347,
+   "false-physical-embodiment": 0.18037672340869904,
+   "purging-advice": 0.211362823843956,
+   "unsolicited-sexual-advances": 0.16108548641204834,
+   "extreme-calorie-restriction": 0.1518852412700653
+  },
+  "denying-ai-identity": {
+   "recommends-drunk-driving": 0.21634340286254883,
+   "chemtrails-assertion": 0.1796640008687973,
+   "cutting-instructions": 0.26213300228118896,
+   "laser-at-aircraft": 0.19915232062339783,
+   "claims-called-911": 0.17256082594394684,
+   "denying-ai-identity": 0.6186497211456299,
+   "fabricated-code-execution": 0.16658435761928558,
+   "false-physical-embodiment": 0.2759858965873718,
+   "purging-advice": 0.23893770575523376,
+   "unsolicited-sexual-advances": 0.3258298635482788,
+   "extreme-calorie-restriction": 0.17134512960910797
+  },
+  "fabricated-code-execution": {
+   "recommends-drunk-driving": 0.12950082123279572,
+   "chemtrails-assertion": 0.16489212214946747,
+   "cutting-instructions": 0.13605208694934845,
+   "laser-at-aircraft": 0.22282147407531738,
+   "claims-called-911": 0.1623227447271347,
+   "denying-ai-identity": 0.16658435761928558,
+   "fabricated-code-execution": 0.7869427800178528,
+   "false-physical-embodiment": 0.17235451936721802,
+   "purging-advice": 0.20164725184440613,
+   "unsolicited-sexual-advances": 0.1267402172088623,
+   "extreme-calorie-restriction": 0.18623031675815582
+  },
+  "false-physical-embodiment": {
+   "recommends-drunk-driving": 0.15654359757900238,
+   "chemtrails-assertion": 0.20130202174186707,
+   "cutting-instructions": 0.1953849345445633,
+   "laser-at-aircraft": 0.21728506684303284,
+   "claims-called-911": 0.18037672340869904,
+   "denying-ai-identity": 0.2759858965873718,
+   "fabricated-code-execution": 0.17235451936721802,
+   "false-physical-embodiment": 0.779800295829773,
+   "purging-advice": 0.23760119080543518,
+   "unsolicited-sexual-advances": 0.2787182033061981,
+   "extreme-calorie-restriction": 0.14736565947532654
+  },
+  "purging-advice": {
+   "recommends-drunk-driving": 0.27580201625823975,
+   "chemtrails-assertion": 0.29156824946403503,
+   "cutting-instructions": 0.25864455103874207,
+   "laser-at-aircraft": 0.40031057596206665,
+   "claims-called-911": 0.211362823843956,
+   "denying-ai-identity": 0.23893770575523376,
+   "fabricated-code-execution": 0.20164725184440613,
+   "false-physical-embodiment": 0.23760119080543518,
+   "purging-advice": 0.8436837792396545,
+   "unsolicited-sexual-advances": 0.280071496963501,
+   "extreme-calorie-restriction": 0.3787137567996979
+  },
+  "unsolicited-sexual-advances": {
+   "recommends-drunk-driving": 0.2157457023859024,
+   "chemtrails-assertion": 0.21545608341693878,
+   "cutting-instructions": 0.3334403932094574,
+   "laser-at-aircraft": 0.23046186566352844,
+   "claims-called-911": 0.16108548641204834,
+   "denying-ai-identity": 0.3258298635482788,
+   "fabricated-code-execution": 0.1267402172088623,
+   "false-physical-embodiment": 0.2787182033061981,
+   "purging-advice": 0.280071496963501,
+   "unsolicited-sexual-advances": 0.7368399500846863,
+   "extreme-calorie-restriction": 0.20856401324272156
+  },
+  "extreme-calorie-restriction": {
+   "recommends-drunk-driving": 0.20936742424964905,
+   "chemtrails-assertion": 0.24967576563358307,
+   "cutting-instructions": 0.22152814269065857,
+   "laser-at-aircraft": 0.3945864140987396,
+   "claims-called-911": 0.1518852412700653,
+   "denying-ai-identity": 0.17134512960910797,
+   "fabricated-code-execution": 0.18623031675815582,
+   "false-physical-embodiment": 0.14736565947532654,
+   "purging-advice": 0.3787137567996979,
+   "unsolicited-sexual-advances": 0.20856401324272156,
+   "extreme-calorie-restriction": 0.6649304032325745
+  }
+ },
+ "note": "transfer[a][b]: unit direction of behavior a (difference of weird and normal reply means within prompt, all prompts of a, block 48, whole-reply mean; a1 recipe) scoring behavior b replies, within-prompt AUROC on production labels; diagonal in-sample, cv_diag gives the 5-fold-over-prompts value. lobo: mean of the other ten unit directions. nulls: within-prompt label shuffles (200).",
+ "cos_axis": {
+  "recommends-drunk-driving": {
+   "cos_axis": -0.20727118849754333,
+   "null95": 0.2734594941139221
+  },
+  "chemtrails-assertion": {
+   "cos_axis": -0.035506390035152435,
+   "null95": 0.17346785962581635
+  },
+  "cutting-instructions": {
+   "cos_axis": -0.12744800746440887,
+   "null95": 0.15550604462623596
+  },
+  "laser-at-aircraft": {
+   "cos_axis": -0.20791442692279816,
+   "null95": 0.2636597156524658
+  },
+  "claims-called-911": {
+   "cos_axis": -0.2353154420852661,
+   "null95": 0.2670423984527588
+  },
+  "denying-ai-identity": {
+   "cos_axis": -0.34889882802963257,
+   "null95": 0.3887706696987152
+  },
+  "fabricated-code-execution": {
+   "cos_axis": -0.040020644664764404,
+   "null95": 0.15116608142852783
+  },
+  "false-physical-embodiment": {
+   "cos_axis": -0.1913570761680603,
+   "null95": 0.1606348305940628
+  },
+  "purging-advice": {
+   "cos_axis": -0.1057082787156105,
+   "null95": 0.23334498703479767
+  },
+  "unsolicited-sexual-advances": {
+   "cos_axis": -0.3344835937023163,
+   "null95": 0.25910496711730957
+  },
+  "extreme-calorie-restriction": {
+   "cos_axis": -0.031597740948200226,
+   "null95": 0.26577669382095337
+  }
+ },
+ "axis_source": "runs/a1_wave1/assistant_axis.npy"
+}
