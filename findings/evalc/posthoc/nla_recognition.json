@@ -1,0 +1,147 @@
+{
+ "nla": {
+  "911": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.618,
+   "top100_share_ge25": 0.02,
+   "rest_share_ge25": 0.007,
+   "top100_mean": 3.2,
+   "rest_mean": 0.65,
+   "n_ge25_of_1000": 8,
+   "n_gt50_of_1000": 0,
+   "n_gt0_of_1000": 116,
+   "mean": 0.91
+  },
+  "dai": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.451,
+   "top100_share_ge25": 0.0,
+   "rest_share_ge25": 0.002,
+   "top100_mean": 0.68,
+   "rest_mean": 0.82,
+   "n_ge25_of_1000": 2,
+   "n_gt50_of_1000": 0,
+   "n_gt0_of_1000": 184,
+   "mean": 0.8
+  },
+  "code": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.472,
+   "top100_share_ge25": 0.0,
+   "rest_share_ge25": 0.003,
+   "top100_mean": 0.95,
+   "rest_mean": 1.41,
+   "n_ge25_of_1000": 3,
+   "n_gt50_of_1000": 0,
+   "n_gt0_of_1000": 272,
+   "mean": 1.36
+  },
+  "embodiment": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.5,
+   "top100_share_ge25": 0.0,
+   "rest_share_ge25": 0.009,
+   "top100_mean": 2.2,
+   "rest_mean": 2.14,
+   "n_ge25_of_1000": 8,
+   "n_gt50_of_1000": 0,
+   "n_gt0_of_1000": 383,
+   "mean": 2.15
+  },
+  "laser": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.518,
+   "top100_share_ge25": 0.0,
+   "rest_share_ge25": 0.0,
+   "top100_mean": 0.95,
+   "rest_mean": 0.56,
+   "n_ge25_of_1000": 0,
+   "n_gt50_of_1000": 0,
+   "n_gt0_of_1000": 122,
+   "mean": 0.6
+  }
+ },
+ "s3d_rl600 (runs/evalc/prep/vm/haiku_raw.jsonl)": {
+  "911": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.632,
+   "top100_share_ge25": 0.06,
+   "rest_share_ge25": 0.001,
+   "top100_mean": 4.94,
+   "rest_mean": 0.56,
+   "n_ge25_of_1000": 7,
+   "n_gt50_of_1000": 2,
+   "n_gt0_of_1000": 99,
+   "mean": 0.99
+  },
+  "dai": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.473,
+   "top100_share_ge25": 0.0,
+   "rest_share_ge25": 0.009,
+   "top100_mean": 0.71,
+   "rest_mean": 1.32,
+   "n_ge25_of_1000": 8,
+   "n_gt50_of_1000": 2,
+   "n_gt0_of_1000": 169,
+   "mean": 1.26
+  },
+  "code": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.471,
+   "top100_share_ge25": 0.05,
+   "rest_share_ge25": 0.042,
+   "top100_mean": 4.86,
+   "rest_mean": 5.27,
+   "n_ge25_of_1000": 43,
+   "n_gt50_of_1000": 1,
+   "n_gt0_of_1000": 553,
+   "mean": 5.23
+  },
+  "embodiment": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.533,
+   "top100_share_ge25": 0.07,
+   "rest_share_ge25": 0.053,
+   "top100_mean": 5.98,
+   "rest_mean": 4.71,
+   "n_ge25_of_1000": 55,
+   "n_gt50_of_1000": 8,
+   "n_gt0_of_1000": 478,
+   "mean": 4.84
+  },
+  "laser": {
+   "n_scored": 1000,
+   "n_unscored": 0,
+   "auroc_top100_vs_rest": 0.52,
+   "top100_share_ge25": 0.01,
+   "rest_share_ge25": 0.004,
+   "top100_mean": 1.13,
+   "rest_mean": 0.7,
+   "n_ge25_of_1000": 5,
+   "n_gt50_of_1000": 0,
+   "n_gt0_of_1000": 106,
+   "mean": 0.74
+  }
+ },
+ "reads": {
+  "n": 9548,
+  "tagged": 9546,
+  "degenerate": 0,
+  "mean_chars": 760.0
+ },
+ "haiku_tokens": {
+  "in": 3188190,
+  "out": 773427,
+  "calls": 1045
+ }
+}

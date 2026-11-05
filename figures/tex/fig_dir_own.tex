@@ -1,0 +1,13 @@
+\documentclass[border=4pt]{standalone}
+\input{style.tex}
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[width=10.5cm, height=6.75cm, ymin=-10.50, ymax=0.5, ytick={0.00,-1.00,-2.00,-3.00,-4.00,-5.00,-6.00,-7.00,-8.00,-9.00,-10.00}, yticklabels={{Sexual advances (7)},{Called 911 (33)},{Denying AI (52)},{Calorie restriction (8)},{Chemtrails (40)},{Drunk driving (44)},{Claiming a body (58)},{Cutting (22)},{Fake code execution (59)},{Laser at aircraft (71)},{Purging (9)}}, major y tick style={draw=none}, axis y line*=left, axis x line*=bottom, xmin=0.4, xmax=1.0, xmajorgrids, xlabel={Within-prompt AUROC, weird vs.\ normal replies (0.5 = chance)}, legend style={at={(0.5,1.02)}, anchor=south, legend columns=2, /tikz/every even column/.append style={column sep=6pt}}, legend cell align=left]
+\draw[black!35, dashed, line width=0.7pt] (axis cs:0.5,-10.50) -- (axis cs:0.5,0.5);
+\addplot[only marks, mark=*, mark size=2.4pt, dirc] coordinates {(0.985,0.14) (0.946,-0.86) (0.923,-1.86) (0.917,-2.86) (0.876,-3.86) (0.859,-4.86) (0.772,-5.86) (0.751,-6.86) (0.700,-7.86) (0.668,-8.86)};\addlegendentry{own direction}
+\addplot[only marks, mark=square*, mark size=2.1pt, ink] coordinates {(0.971,0.00) (0.918,-1.00) (0.902,-2.00) (0.860,-3.00) (0.762,-4.00) (0.761,-5.00) (0.755,-6.00) (0.739,-7.00) (0.647,-8.00) (0.704,-9.00) (0.780,-10.00)};\addlegendentry{one direction fit on all eleven}
+\addplot[only marks, mark=diamond*, mark size=2.5pt, read] coordinates {(0.971,-0.14) (0.881,-1.14) (0.845,-2.14) (0.826,-3.14) (0.673,-4.14) (0.665,-5.14) (0.754,-6.14) (0.713,-7.14) (0.537,-8.14) (0.683,-9.14) (0.802,-10.14)};\addlegendentry{mean of the other ten (behavior never seen)}
+\addplot[only marks, mark=|, mark size=5pt, line width=1pt, ctrl] coordinates {(0.809,0.00) (0.773,-1.00) (0.752,-2.00) (0.678,-3.00) (0.656,-4.00) (0.689,-5.00) (0.652,-6.00) (0.643,-7.00) (0.558,-8.00) (0.569,-9.00)};\addlegendentry{95th pct.\ with labels shuffled}
+\end{axis}
+\end{tikzpicture}
+\end{document}

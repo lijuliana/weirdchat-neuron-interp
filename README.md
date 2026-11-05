@@ -19,7 +19,7 @@ labels) does no better than a random edit of the same size, and any 100 neurons 
 almost as much as the top 100.** Spec and tables: `findings/evalc/` (pre-registered; frozen hashes in `spec.md`
 section 11); code: scripts 61.
 
-![Eval C](figures/evalc_control.svg)
+![Eval C](figures/fig_evalc.svg)
 
 Setup. Seven methods, each turned into the strongest intervention it yields. The dose was fixed before any behavior
 data: the strongest of three settings of increasing strength whose damage (extra next-token loss on capability text and on benign
@@ -36,10 +36,13 @@ exploratory comparisons; the top-100 set is the single pre-declared confirmatory
 | Zero own top-100 neurons (attribution; reference) | 29% → 9% | 68% [50, 86] | 86% beyond 20 random sets, p 4e-8 | .0047 | clears the bar |
 | Zero a random 100 of the attribution's top-1,000 (pooled over the 10 draws used as the O-lens arm's controls; derived row, not pre-registered) | 29% → 13% | 55% [41, 69]; single draws 46-62% | 74% beyond the same 20 random sets | .0013 | clears the bar at a quarter of the top-100's damage |
 | Ceiling on the weird-vs-normal direction, layers 40-56 (difference of means, block 48) | 29% → 10% | 65% [49, 78] | 79% beyond 10 random directions, p 2e-10 | .0118 | clears the bar |
+| Ceiling on one joint direction for all behaviors (unit mean of the 11 behaviors' discovery-prompt directions; post hoc) | 29% → 18% | 38% [23, 52] | 52% beyond the same 10 random directions, p < .001 | .0168 | clears the bar narrowly; the own directions remove 27 points more (p .02) |
 | Assistant Axis cap, 25th percentile, layers 40-59 (persona vectors) | 29% → 20% | 32% [18, 48] | 54% beyond 10 role caps of equal damage, p .006 after Holm correction | .0088 | clears the bar narrowly; 34% on the four replies per prompt not used for the control comparison |
 | Zero shared mid-layer 100 neurons | 29% → 20% | 32% [18, 46] | 43%, p .002 after Holm correction | .0200 | under the bar |
 | Ceiling on a J-lens keyword direction, block 44 | 29% → 19% | 33% [23, 44] | 41%, p .009 after Holm correction | .0003 | under the bar |
 | Zero the 100 of the top-1000 the O-lens reads as the behavior | 29% → 12% | 59% [45, 76] | 9%: 10 random 100s from the same top-1000 drop it 46-62% | .0008 | no gain from the filter |
+| Same, read by the affine-map O-lens (post hoc) | 29% → 12% | 60% [43, 75] | 14% beyond the same 10 draws, p .29 | .0007 | no gain from the filter |
+| Same, read by the NLA (post hoc) | 29% → 14% | 53% [37, 68] | 11% beyond the same 10 draws, p .41 | .0012 | no gain; the NLA describes every neuron direction as a web-text genre (0 of 5 validation neurons on topic) |
 | Clamp label-picked SAE features (block 42) to zero | 29% → 26% | 12% [-3, 27] | 16%, p .31 after Holm correction | .0001 | no effect |
 
 Side effects at every setting: capability mini-set .98-.99 (clean .98), MMLU .83-.85, GSM8K .91-.93, 160 of 160
@@ -171,6 +174,8 @@ behaviors; and use readouts to measure interventions (where they work) rather th
 
 **No internal monitor beats a Haiku judge reading the transcript at warning that a reply will turn weird, and none adds to it significantly after correction (the NLA and O-lens readouts add +.02 to +.06 before correction).** Spec: `runs/monitors/SPEC.md`; tables: `runs/monitors/eval/report.md`; Figure 1 of the viewer's Compare tab.
 
+![Eval A](figures/fig_monitors.svg)
+
 Setup: every method reads the same states in the same 410 weird replies and must score each position from its own output alone (readouts are scored 0-100 by a blind Haiku 5.5 judge that never sees the transcript). Two tests. (b) 500 cut points where sampled continuations of the identical prefix split into weird and normal: within-cut AUROC at 4 tokens in, chance 0.5, best possible 0.87 given shared opening tokens. (a) 5,275 interior cut points vs measured P(weird | prefix): within-reply partial rank correlation with the position trend removed and each monitor compared with its own shuffled null. 5-fold cross-validation grouped by prompt pattern for every fit.
 
 | Monitor | (b) AUROC | (a) corrected correlation |
@@ -209,7 +214,7 @@ Setup: `s3d_rl600` at layers 32/44/56, 2 readouts per position, each scored 0-10
    - Same tokens, top-100 set zeroed: lens score -0.90 [-1.15, -0.68] at L56 (-0.64 at L44); pushing the state the same distance the opposite way: +0.49 [+0.31, +0.70].
    - Size-matched controls barely move it: random direction +0.08 [-0.05, +0.23], random-100 scaled to the same displacement -0.24 [-0.53, +0.03]. All 5 behaviors agree in sign.
 
-Figures: [forks](figures/olens_forks.svg), [ablation](figures/olens_ablation.svg). Tables: [runs/olens/analysis.md](runs/olens/analysis.md). Code: `src/olens.py`, scripts 80-90.
+Figures: [forks](figures/fig_fork.svg), [measuring vs. picking](figures/fig_lens.svg). Tables: [runs/olens/analysis.md](runs/olens/analysis.md). Code: `src/olens.py`, scripts 80-90.
 
 ### Weird-vs-normal direction
 
@@ -220,7 +225,9 @@ but not to fake code execution (.54). There is no single direction; eval C appli
 its own held-out prompts.** Data: findings/direction/transfer_L48.json (from runs/persona_fwd/a1 states, scripts 73);
 viewer tab "Weird-vs-normal direction".
 
-![Direction transfer](figures/direction_transfer.svg)
+![One direction for all behaviors](figures/fig_dir_own.svg)
+
+![Direction transfer](figures/fig_dir_transfer.svg)
 
 1. **Fit.** Per behavior and block, d_p = mean(weird) − mean(normal) of the reply-mean residual state within prompt p,
    averaged over prompts with weight n_w n_n / (n_w + n_n), unit-normalized. Production labels (Gemma 4 31B, thinking
@@ -243,6 +250,10 @@ viewer tab "Weird-vs-normal direction".
    driving and chemtrails. A direction fit on the four eval C behaviors only matches their own directions (.93, .69,
    .77, .70) and scores the seven it never saw at .57 (chemtrails) to .96 (sexual advances). Not yet tested as an
    intervention.
+3c. **As an intervention (post hoc, eval C harness)** the joint direction ceiled at its benign median over layers 40-56
+   removes 38% of the behavior on the 48 held-out prompts (52% beyond 10 random directions, .017 nats/token): it clears
+   the bar narrowly, but each behavior's own direction removes 27 points more (65%). Denying AI −65%, claiming a body
+   −50%, laser −30%, fake code execution −24%.
 4. **As a monitor (eval A)** the direction scores .55 at a cut point against .56 for the text judge and a ceiling of
    .87, the same as a supervised ridge probe on the full state (.53); see "Every method as a monitor".
 5. **As an intervention (eval C)** a ceiling at the benign median over layers 40 to 56 removes 65% of the behavior
@@ -301,7 +312,7 @@ Setup: community Qwen3.6-27B axis and 9 trait vectors ([Same0620/qwen36-27b-assi
    of damage the neuron-set ladder removes about twice as much. Ten role-direction caps matched to the axis cap's damage
    remove −12% to +15%.
 
-![Assistant Axis dose and cost](figures/evalc_axis.svg)
+![Assistant Axis dose and cost](figures/fig_axis.svg)
 
 Caveats: 10 prompts per behavior, 3-5 control caps (beating all 3 happens by chance 1 time in 4, all 5 1 time in 6), community vectors, capping layers borrowed from Qwen3-32B. Code: scripts 70-74.
 

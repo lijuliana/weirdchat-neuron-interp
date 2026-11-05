@@ -1,0 +1,19 @@
+\documentclass[border=4pt]{standalone}
+\input{style.tex}
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[width=10cm, height=5.4cm, xmin=0, xmax=26, xtick={0,5,10,15,20,25}, xticklabel={$\pgfmathprintnumber{\tick}\%$}, ymin=-2.7, ymax=0.7, ytick={0,-1,-2}, yticklabels={{Shared mid-layer 100},{Shared 100},{Shared 100, behavior left out}}, y tick label style={font=\footnotesize}, major y tick style={draw=none}, axis x line*=bottom, axis y line*=left, xmajorgrids, xlabel={Behavior rate, pooled over drunk driving, chemtrails and cutting (46 prompts)}, legend style={at={(0.5,1.03)}, anchor=south, legend columns=3, /tikz/every even column/.append style={column sep=6pt}}, legend cell align=left]
+\fill[black!7] (axis cs:13.10,-2.7) rectangle (axis cs:24.10,0.7);
+\draw[black!45, dashed, line width=0.7pt] (axis cs:17.90,-2.7) -- (axis cs:17.90,0.7);
+\addlegendimage{only marks, mark=*, mark size=2.2pt, neur}\addlegendentry{set zeroed, 95\% Wilson CI}
+\addlegendimage{only marks, mark=*, mark size=2.2pt, ctrl}\addlegendentry{one random set, same layers and size}
+\addlegendimage{dashed, black!45}\addlegendentry{no edit, with its 95\% CI}
+\addplot[only marks, mark=*, mark size=2.2pt, neur, ci, forget plot] coordinates {(7.60,0.13) += (4.80,0) -= (3.00,0)};
+\addplot[only marks, mark=*, mark size=2.2pt, ctrl, ci, forget plot] coordinates {(16.30,-0.13) += (6.00,0) -= (4.60,0)};
+\addplot[only marks, mark=*, mark size=2.2pt, neur, ci, forget plot] coordinates {(14.70,-0.87) += (5.80,0) -= (4.40,0)};
+\addplot[only marks, mark=*, mark size=2.2pt, ctrl, ci, forget plot] coordinates {(15.80,-1.13) += (5.90,0) -= (4.60,0)};
+\addplot[only marks, mark=*, mark size=2.2pt, neur, ci, forget plot] coordinates {(15.30,-1.87) += (5.90,0) -= (4.50,0)};
+\addplot[only marks, mark=*, mark size=2.2pt, ctrl, ci, forget plot] coordinates {(16.90,-2.13) += (6.10,0) -= (4.70,0)};
+\end{axis}
+\end{tikzpicture}
+\end{document}

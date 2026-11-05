@@ -1,0 +1,23 @@
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots,fillbetween}
+\usetikzlibrary{calc}
+% one colour per kind of method, the same in every figure (Okabe-Ito)
+\definecolor{neur}{HTML}{D55E00}   % neurons chosen by attribution
+\definecolor{dirc}{HTML}{009E73}   % directions from the weird-vs-normal contrast
+\definecolor{read}{HTML}{0072B2}   % readout methods and interventions chosen from readouts
+\definecolor{pers}{HTML}{CC79A7}   % Assistant Axis / persona
+\definecolor{ctrl}{HTML}{8C8C8C}   % random controls
+\definecolor{meas}{HTML}{E69F00}   % measured outcome
+\definecolor{ink}{HTML}{222222}
+\pgfplotsset{
+  every axis/.append style={clip=false, font=\small, axis line style={black!55}, tick style={black!55}, tick align=outside,
+    label style={font=\small}, tick label style={font=\footnotesize}, title style={font=\small, align=center}},
+  grid style={black!9, line width=0.4pt},
+  every axis legend/.append style={font=\footnotesize, draw=none, fill=none},
+  ci/.style={/pgfplots/error bars/x dir=both, /pgfplots/error bars/x explicit, /pgfplots/error bars/error bar style={line width=0.8pt}, /pgfplots/error bars/error mark=none},
+  yci/.style={/pgfplots/error bars/y dir=both, /pgfplots/error bars/y explicit, /pgfplots/error bars/error bar style={line width=0.8pt}, /pgfplots/error bars/error mark=none},
+}

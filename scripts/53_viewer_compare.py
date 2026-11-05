@@ -327,7 +327,7 @@ except FileNotFoundError as e:
 
 titles = {b["id"]: b["title"] for b in json.load(open(f"{args.out}/index.json"))["behaviors"]}
 json.dump({"titles": titles, "within": within, "fork": fork, "stop": stop, "axis": {"tau": 8.52, "mu": 11.13},
-           "dirs": dirs, "shared": shared, "abl": abl, "nlab": nlab, "mon": mon, "evalc": evalc, "chive": chive, "axis": axis, "dirs11": dirs11},
+           "dirs": dirs, "shared": shared, "abl": abl, "nlab": nlab, "mon": mon, "evalc": evalc, "chive": chive, "axiscap": axis, "dirs11": dirs11},
           open(f"{args.out}/compare.json", "w"), separators=(",", ":"))
 if mon: print("mon:", [(r["id"], r["auroc"] and r["auroc"][0], r["partial"] and r["partial"][0]) for r in mon["rows"]])
 print("within all:", within["all"])
