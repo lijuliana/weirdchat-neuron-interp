@@ -211,7 +211,7 @@ def fig_monitors():
              r" title={(a) Warning at 500 cut points}]")
     L.append(r"\fill[black!6] (axis cs:" + f(tj, 3) + f",{ymin+0.4:.2f}) rectangle (axis cs:" + f(ceil, 3) + ",0.6);")
     L.append(rf"\node[font=\scriptsize, black!60, align=center] at (axis cs:{f((tj+ceil)/2,3)},{f((ymin+0.4)/2,2)}) {{not reached by\\any monitor}};")
-    for x, lab, st, anc in ((0.5, "", "black!40", "west"), (tj, "text judge", "black", "west"), (ceil, "ceiling (judge noise)", "black!55", "east")):
+    for x, lab, st, anc in ((0.5, "", "black!40", "west"), (tj, "text judge", "black", "west"), (ceil, "ceiling: identical prefixes", "black!55", "east")):
         L.append(rf"\draw[{st}, dashed, line width=0.7pt] (axis cs:{f(x,3)},{ymin+0.4:.2f}) -- (axis cs:{f(x,3)},0.6);")
         if lab:
             L.append(rf"\node[{st}, font=\scriptsize, anchor={anc}] at (axis cs:{f(x,3)},0) {{{lab}}};")

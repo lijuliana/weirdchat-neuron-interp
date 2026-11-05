@@ -22,7 +22,8 @@ findings/evalc (eval C). Literature notes with URLs: this file's section 8. The 
    reads it directly. A readout that forecasts the continuation cannot beat a reader who sees the continuation.
 4. Two further causes are specific to our setting and are not in the literature. (a) At the positions where a monitor
    is useful, the outcome is mostly undecided: a supervised probe on the full residual state scores .55, the same as
-   the verbalizers, against a judge-noise ceiling of .87, so the state itself carries little about which way the
+   the verbalizers, against a ceiling of .87 (the best any reader can reach, because some weird and normal
+   continuations are still word-for-word identical 4 tokens in), so the state itself carries little about which way the
    reply will go. (b) A description of a component is not a description of a state: the O-lens cannot tell the 100
    causally important neurons from the other 900 of the attribution's top-1,000 (AUROC .46 to .63), even though it
    registers their removal in the state (eval W4, −0.9 on a 0 to 10 scale).
@@ -39,7 +40,8 @@ Three tests, one model (Qwen3.6-27B), one judge (Gemma 4 31B with WeirdChat's ru
    into weird and normal. Each method reads the residual state 4 tokens into each continuation and must order the
    weird one above the normal one. The transcript judge (Haiku reading the text so far) scores .56; the O-lens .56,
    NLA .54, J-lens .54, SAE labels .54, a supervised probe on the full state .53 to .55, and the weird-vs-normal
-   direction .55. No readout adds to the text judge after correction. The judge-noise ceiling is .87. At the 34 sharp
+   direction .55. No readout adds to the text judge after correction. The ceiling is .87: weird and normal continuations that are still identical 4 tokens in can only
+   count as coin flips, which caps any reader there. At the 34 sharp
    forks, where the deciding token is already written, the text judge scores .85 and the O-lens .82; elsewhere both
    score .54. (runs/monitors/eval/report.md)
 2. **Eval B, explanation.** 1,479 single edits to 118 prompts, each judged TRUE if it moves the behavior rate by 25
@@ -193,9 +195,10 @@ Ordered by how much each explains our result.
 ### 4.1 Where a monitor would be useful, the state has not decided yet
 
 The within-cut design in eval A asks a monitor to tell apart two continuations of the same prefix from the state 4
-tokens into each. The ceiling of .87 accounts for judge noise only. Every reader of the full state, including a probe
-trained on these labels, lands at .53 to .56, and so does the text. The missing .3 is the share of the
-outcome that is decided later, by sampling, and no reader of the state can recover it. The weird turn in WeirdChat is a late, stochastic event:
+tokens into each. The ceiling of .87 comes only from ties: some weird and normal continuations are still word-for-word identical 4
+tokens in, and no reader can separate those. Every reader of the full state, including a probe trained on these labels,
+lands at .53 to .56, and so does the text. The continuations already differ in their words for most pairs, yet nothing
+reading the state or the text can tell which one will turn weird: the outcome is decided later, by sampling. The weird turn in WeirdChat is a late, stochastic event:
 the measured chance of weird is .18 before a sharp fork and jumps by 50 points or more at one token. A verbalizer
 cannot report a decision the model has not made, and a transcript judge cannot either. The benchmarks in section 2
 never face this, because their items are built so that the target is computed before the read position.

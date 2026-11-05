@@ -101,7 +101,7 @@ and which component to edit is a different task, and on it a judge reading the t
 warning before the weird turn (eval A), predicting which prompt edits matter (eval B) and choosing an edit (eval C).
 Five causes, ordered by weight: the NLA and O-lens are trained to predict the next text, which the transcript contains;
 at the position where a monitor would act the block-48 state does not yet determine the outcome (supervised probe .55,
-ceiling .87); a readout of a neuron's output direction says nothing about what ablating the neuron does; the Opus
+against a ceiling of .87 set by continuations still identical 4 tokens in); a readout of a neuron's output direction says nothing about what ablating the neuron does; the Opus
 reader uses its own knowledge, not the activation; confabulation and web-text training are present but removing them
 changes nothing.** Full analysis with sources: [findings/readouts.md](findings/readouts.md); viewer tab "Why reading
 the transcript beats the readout methods".
@@ -126,7 +126,8 @@ the transcript beats the readout methods".
    separation (.82) is at the 46 sharp forks, where the fork token is already written.
 4. **At the position where a monitor would act, the block-48 state does not yet determine the outcome.** A ridge probe
    trained on the full state at the 500 eval A cut points separates the weird from the normal continuation at AUROC
-   .55, the same as every verbalizer and the text judge, against a judge-noise ceiling of .87. Measured P(weird) is .18
+   .55, the same as every verbalizer and the text judge, against a ceiling of .87 (the best any reader can do, because some weird and normal
+   continuations are still word-for-word identical 4 tokens in). Measured P(weird) is .18
    before a sharp fork and jumps by 50 points or more at one token. No reader can report a choice the model has not
    made. This is a failure mode the readout literature has not named: the readout is accurate (the O-lens's three
    continuations at the case-study state match the model's own next-token distribution) and useless, because the state
@@ -255,7 +256,7 @@ viewer tab "Weird-vs-normal direction".
    the bar narrowly, but each behavior's own direction removes 27 points more (65%). Denying AI −65%, claiming a body
    −50%, laser −30%, fake code execution −24%.
 4. **As a monitor (eval A)** the direction scores .55 at a cut point against .56 for the text judge and a ceiling of
-   .87, the same as a supervised ridge probe on the full state (.53); see "Every method as a monitor".
+   .87 (set by continuations still identical 4 tokens in), the same as a supervised ridge probe on the full state (.53); see "Every method as a monitor".
 5. **As an intervention (eval C)** a ceiling at the benign median over layers 40 to 56 removes 65% of the behavior
    (79% beyond norm-matched random directions), including denying AI; projecting the direction out entirely costs
    .118 nats per token and does not help, so the behavior rides on the excess along the direction, not on its presence.
