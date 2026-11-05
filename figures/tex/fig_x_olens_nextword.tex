@@ -1,0 +1,20 @@
+\documentclass[border=4pt]{standalone}
+\input{style.tex}
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[width=9cm, height=6.6cm, xmin=0.8, xmax=5.2, xtick={1,2,3,4,5}, ymode=log, ymin=1e-4, ymax=0.5, ytick={1e-4,1e-3,1e-2,1e-1}, yticklabels={0.01\%,0.1\%,1\%,10\%}, axis x line*=bottom, axis y line*=left, ymajorgrids, xlabel={Number of words the readout gets right in a row}, ylabel={Share of O-lens lines (log scale)}]
+\addplot[read, line width=1.3pt, mark=*, mark size=1.4pt] coordinates {(1,0.244684) (2,0.109434) (3,0.049476) (4,0.022402) (5,0.010422)};
+\addplot[read, line width=1.3pt, mark=*, mark size=1.4pt, densely dashed] coordinates {(1,0.238701) (2,0.105537) (3,0.047918) (4,0.020409) (5,0.008814)};
+\addplot[read!70, line width=1.3pt, mark=*, mark size=1.4pt] coordinates {(1,0.162789) (2,0.068357) (3,0.032594) (4,0.013337) (5,0.007356)};
+\addplot[read!70, line width=1.3pt, mark=*, mark size=1.4pt, densely dashed] coordinates {(1,0.153864) (2,0.062138) (3,0.029293) (4,0.011540) (5,0.006628)};
+\addplot[read!40, line width=1.3pt, mark=*, mark size=1.4pt] coordinates {(1,0.103924) (2,0.032013) (3,0.014394) (4,0.006271) (5,0.003703)};
+\addplot[read!40, line width=1.3pt, mark=*, mark size=1.4pt, densely dashed] coordinates {(1,0.099475) (2,0.030875) (3,0.014168) (4,0.005726) (5,0.004014)};
+\addplot[ctrl, line width=1pt, mark=o, mark size=1.4pt] coordinates {(1,0.004552) (2,0.000419) (3,0.000120) (4,0.000120) (5,0.000120)};
+\node[font=\footnotesize, read, anchor=west] at (axis cs:5.25,0.01150) {block 56};
+\node[font=\footnotesize, read!70, anchor=west] at (axis cs:5.25,0.00660) {block 44};
+\node[font=\footnotesize, read!40, anchor=west] at (axis cs:5.25,0.00360) {block 32};
+\node[font=\footnotesize, ctrl!80!black, anchor=south west, align=left] at (axis cs:3.0,1.5e-4) {compared with the words of a random other\\reply (none from 3 words on)};
+\node[font=\scriptsize, black!60, anchor=north east, align=right] at (axis cs:5.15,0.45) {solid: reply read in the chat\\dashed: same words as a plain document};
+\end{axis}
+\end{tikzpicture}
+\end{document}
