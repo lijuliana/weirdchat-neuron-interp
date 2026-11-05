@@ -1,7 +1,7 @@
 """figures/evalc_control.svg: eval C drop and excess per method (README figure). Rows: the seven pre-registered arms
 (runs/evalc/judge/eval/main_table.csv), the derived random-100-of-top-1000 row (random_pool.json) and, when present,
 the post-hoc arms analysed by scripts/61_evalc_nla_c8.py (runs/evalc/nla_c8/results*.json: C8 NLA-picked, C10 affine-map
-O-lens-picked, C9 joint direction). Post-hoc and derived rows are drawn faded. Run: .venv/bin/python -I scripts/61_evalc_figure.py"""
+O-lens-picked, C9 joint direction). Run: .venv/bin/python -I scripts/61_evalc_figure.py"""
 import json, os
 import pandas as pd, matplotlib
 matplotlib.use("Agg")
@@ -18,12 +18,12 @@ for path, arm in (("runs/evalc/nla_c8/results.json", "C8"), ("runs/evalc/nla_c8/
 short = {"C1a": "Top-100 neurons\n(attribution)", "R": "Random 100 of the\ntop-1000 (10 draws)", "C3": "Weird-vs-normal\ndirection", "C9": "One joint direction\nfor all behaviors",
          "C2": "Assistant Axis\ncap", "C6": "J-lens keyword\ndirection", "C1b": "Shared mid-layer\n100 neurons", "C5": "SAE features",
          "C7": "O-lens-picked 100\nof top-1000", "C10": "Affine O-lens-picked\n100 of top-1000", "C8": "NLA-picked 100\nof top-1000"}
-order = [a for a in ["C1a", "R", "C3", "C9", "C2", "C6", "C1b", "C5", "C7", "C10", "C8"] if a in rows]
+order = [a for a in ["C1a", "R", "C1b", "C3", "C9", "C5", "C6", "C7", "C10", "C8", "C2"] if a in rows]
 fig, ax = plt.subplots(figsize=(6.5, 0.32 * len(order) + 0.9), constrained_layout=True)
 y = list(range(len(order)))[::-1]
 hot, acc = "#b5451b", "#2b5f8a"
 for yi, a in zip(y, order):
-    r = rows[a]; al = 0.45 if r["faded"] else 1.0
+    r = rows[a]; al = 1.0
     ax.plot([r["lo"], r["hi"]], [yi + 0.17, yi + 0.17], color=hot, lw=1, alpha=.6 * al)
     ax.plot(r["drop"], yi + 0.17, "o", color=hot, ms=5, alpha=al, label="Drop in behavior rate" if yi == y[0] else None)
     ax.plot([r["elo"], min(r["ehi"], 1.3)], [yi - 0.17, yi - 0.17], color=acc, lw=1, alpha=.6 * al)
