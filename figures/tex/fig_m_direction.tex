@@ -1,0 +1,33 @@
+\documentclass[border=4pt]{standalone}
+\input{style.tex}
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[width=8.2cm, height=8.2cm, xmin=0.5, xmax=1.0, ymin=0.5, ymax=1.0, xtick={0.5,0.6,0.7,0.8,0.9,1.0}, ytick={0.5,0.6,0.7,0.8,0.9,1.0}, xticklabel style={/pgf/number format/.cd, fixed, precision=1}, yticklabel style={/pgf/number format/.cd, fixed, precision=1}, axis x line*=bottom, axis y line*=left, grid=major, xlabel={AUROC of the behavior's own direction}, ylabel={AUROC of one direction fit on four behaviors}]
+\draw[black!40, dashed, line width=0.7pt] (axis cs:0.5,0.5) -- (axis cs:1,1) node[pos=0.2, anchor=south, font=\scriptsize, black!60, rotate=45] {same as own direction};
+\addplot[only marks, mark=o, dirc, line width=0.9pt, fill=white, mark size=2.6pt] coordinates {(0.859,0.718)};
+\node[font=\scriptsize, anchor=west, ink] at (axis cs:0.859,0.718) {\,Drunk driving\,};
+\addplot[only marks, mark=o, dirc, line width=0.9pt, fill=white, mark size=2.6pt] coordinates {(0.876,0.569)};
+\node[font=\scriptsize, anchor=east, ink] at (axis cs:0.876,0.569) {\,Chemtrails\,};
+\addplot[only marks, mark=o, dirc, line width=0.9pt, fill=white, mark size=2.6pt] coordinates {(0.751,0.677)};
+\node[font=\scriptsize, anchor=north, ink] at (axis cs:0.751,0.677) {\,Cutting\,};
+\addplot[only marks, mark=*, dirc, mark size=2.6pt] coordinates {(0.668,0.700)};
+\node[font=\scriptsize, anchor=south east, dirc] at (axis cs:0.668,0.700) {\,Laser at aircraft\,};
+\addplot[only marks, mark=o, dirc, line width=0.9pt, fill=white, mark size=2.6pt] coordinates {(0.946,0.893)};
+\node[font=\scriptsize, anchor=east, ink] at (axis cs:0.946,0.893) {\,Called 911\,};
+\addplot[only marks, mark=*, dirc, mark size=2.6pt] coordinates {(0.923,0.927)};
+\node[font=\scriptsize, anchor=east, dirc] at (axis cs:0.923,0.927) {\,Denying AI\,};
+\addplot[only marks, mark=*, dirc, mark size=2.6pt] coordinates {(0.700,0.689)};
+\node[font=\scriptsize, anchor=north east, dirc] at (axis cs:0.700,0.689) {\,Fake code exec.\,};
+\addplot[only marks, mark=*, dirc, mark size=2.6pt] coordinates {(0.772,0.772)};
+\node[font=\scriptsize, anchor=north west, dirc] at (axis cs:0.772,0.772) {\,Claiming a body\,};
+\addplot[only marks, mark=o, dirc, line width=0.9pt, fill=white, mark size=2.6pt] coordinates {(0.985,0.963)};
+\node[font=\scriptsize, anchor=east, ink] at (axis cs:0.985,0.963) {\,Sexual advances\,};
+\addplot[only marks, mark=o, dirc, line width=0.9pt, fill=white, mark size=2.6pt] coordinates {(0.917,0.777)};
+\node[font=\scriptsize, anchor=west, ink] at (axis cs:0.917,0.777) {\,Calorie restriction\,};
+\addlegendimage{only marks, mark=*, dirc, mark size=2.6pt}\addlegendentry{fit on this behavior}
+\addlegendimage{only marks, mark=o, dirc, line width=0.9pt, mark size=2.6pt}\addlegendentry{never seen}
+\legend{}
+\node[anchor=north west, font=\footnotesize, align=left] at (axis cs:0.515,0.985) {\tikz\fill[dirc] (0,0) circle (2.6pt); fit on this behavior (4)\\[2pt]\tikz\draw[dirc, line width=0.9pt] (0,0) circle (2.6pt); never seen by the fit (6)};
+\end{axis}
+\end{tikzpicture}
+\end{document}

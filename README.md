@@ -67,9 +67,10 @@ Results that differ from what we expected:
    (median 0.9 across the 20 set-by-behavior cells), the spread random 100-neuron sets also show; the one clear move is the
    denying-AI set raising false embodiment 1.8-fold.
    The direction, fit once per behavior with no attribution, has no such hole.
-4. **Readout-selected edits do not work.** Features chosen because their auto-labels mention the behavior (SAE), and a
-   direction built from the behavior's keywords through the J-lens, move the rate 12% and 33%, no better than random
-   features or token directions. What a component "says" in text did not predict what removing it does.
+4. **Readout-selected edits fall short of the bar.** Features chosen because their auto-labels mention the behavior
+   (SAE) move the rate 12%, no more than random features. A direction built from the behavior's keywords through the
+   J-lens moves it 33%, beyond all 5 random-word directions (41% of the clean rate beyond the worst, p .009 after Holm correction) at the
+   lowest damage of any edit (.0003 nats per token), but under the 50% bar; it leaves denying AI unchanged.
 5. **The Assistant Axis cap has a small effect.** The cap beats 10 role caps of equal damage on the four replies per prompt used for the control comparison but
    not on the other four replies, and even the over-gate cap at .043 nats/token removes only 51%. The identity behaviors are not
    mainly a persona slip along that axis.

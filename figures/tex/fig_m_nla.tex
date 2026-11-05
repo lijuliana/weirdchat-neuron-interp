@@ -1,0 +1,16 @@
+\documentclass[border=4pt]{standalone}
+\input{style.tex}
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[name=a, width=5.6cm, height=6.6cm, xmin=-0.5, xmax=2.5, xtick={0,1,2}, xticklabels={32,44,56}, ymin=0, ymax=100, ytick={0,25,50,75,100}, yticklabel={$\pgfmathprintnumber{\tick}\%$}, axis x line*=bottom, axis y line*=left, ymajorgrids, xlabel={Block}, ylabel={Variance of the state reconstructed}, title={(a)}, title style={at={(-0.3,1.02)}, anchor=south west}]
+\draw[black!35, line width=1pt] (axis cs:0,64.31) -- (axis cs:0,38.73);
+\draw[black!35, line width=1pt] (axis cs:1,71.95) -- (axis cs:1,46.44);
+\draw[black!35, line width=1pt] (axis cs:2,78.10) -- (axis cs:2,39.88);
+\addplot[only marks, mark=*, mark size=2.6pt, black] coordinates {(0,64.31) (1,71.95) (2,78.10)};
+\addplot[only marks, mark=*, mark size=2.6pt, read, yci] coordinates {(0,38.73) += (0,3.20) -= (0,3.73) (1,46.44) += (0,3.36) -= (0,4.20) (2,39.88) += (0,3.06) -= (0,3.51)};
+\node[font=\footnotesize, anchor=south, align=center] at (axis cs:1,75.95) {web text\\(its training data)};
+\node[font=\footnotesize, read, anchor=north, align=center] at (axis cs:1,39.44) {our chat\\replies};
+\end{axis}
+\node[anchor=north west, font=\footnotesize, align=left] at ($(a.north east)+(0.8cm,0.45cm)$) {(b)\enspace The NLA's description of the output direction of each\\ of the ten neurons that most drive fake code execution\\[4pt]\begin{tabular}{@{}r@{\enspace}l@{}}{\color{black!55}block} & {\color{black!55}NLA description (first phrase)}\\[2pt]{\color{black!55}33} & Academic maritime/Robotic Ocean Vehicle paper abstract\\[1pt]{\color{black!55}47} & Travel/photography blog spotlighting Louisiana wildlife\\[1pt]{\color{black!55}49} & Blog dashboard aggregation page\\[1pt]{\color{black!55}50} & Technical Q\&A blog post on foldable phone durability\\[1pt]{\color{black!55}52} & Legal/patent-law blog post\\[1pt]{\color{black!55}56} & Academic abstract/blog promotion of a paper on qCAA\ldots\\[1pt]{\color{black!55}62} & Corporate webpage boilerplate/SEO-style prose tightly\ldots\\[1pt]{\color{black!55}62} & Spanish/Uruguayan news wire article about gridlock\ldots\\[1pt]{\color{black!55}63} & Personal portfolio blog listing sequential projects\\[1pt]{\color{black!55}63} & SEO-style animal rescue/adoption blog listicle for a\ldots\end{tabular}};
+\end{tikzpicture}
+\end{document}

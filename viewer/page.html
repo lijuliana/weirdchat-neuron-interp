@@ -451,6 +451,7 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
       <button type="button" data-sub="olens" aria-selected="false">Reading the neurons</button>
       <button type="button" data-sub="shared" aria-selected="false">Behaviors without a set</button>
       <button type="button" data-sub="edits" aria-selected="false">Eval B · Which prompt edits matter</button>
+      <button type="button" data-sub="each" aria-selected="false">One figure per method</button>
       <button type="button" data-sub="why" aria-selected="false">Why reading the transcript beats the readout methods</button>
       <button type="button" data-sub="table" aria-selected="false">All methods</button>
       <button type="button" data-sub="setup" aria-selected="false">Methods &amp; setup</button>
@@ -480,13 +481,13 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
           <li><b>One direction does the work of 100 neurons, and generalizes better.</b> The difference between the mean states of weird and normal replies, fit on discovery prompts, takes the rate from 29% to 10%. It works on all four behaviors with 8 or more held-out prompts, including denying being an AI (−55%), where that behavior's own top-100 set does nothing (−10%). It also raises refusals less (4% vs 7%).</li>
           <li><b>A random 100 of the attribution's top 1,000 may be the better edit.</b> Random 100-neuron draws from the attribution's top 1,000 remove 46–62% of the behavior on their own, at a quarter of the ranked top-100 set's damage (.0013 against .0047 nats per token on benign text). The ranked set's extra 6 to 22 points of removal cost four times the damage; zeroing the whole top 1,000 removes 93% at .0215. The 100 that the O-lens reads as the behavior remove 59%, no more than a random draw. Against draws from inside the pool, the top-100 set's margin would be about 22%, not 86%.</li>
           <li><b>The neuron sets work only on their own behavior, and not always then.</b> The code-execution set takes fake code execution to 0% on 14 new prompts and the 911 set takes 911 to 0%, yet the denying-AI set leaves denying AI untouched. Applied to the other four behaviors' prompts, each set leaves them at 0.5 to 1.8 times their unedited rate (median 0.9 across the 20 set-by-behavior cells), the spread random 100-neuron sets also show; the one clear move is the denying-AI set raising false embodiment 1.8-fold. The direction has no such hole.</li>
-          <li><b>Picking edits from descriptions does not work.</b> SAE features whose labels mention the behavior (−12%) and a J-lens direction built from the behavior's keywords (−33%) do no better than random features or token directions. What a component says in text did not predict what removing it does. Across all three evals the descriptive readouts (O-lens, J-lens, SAE labels, NLA) also added nothing to a judge reading the transcript.</li>
+          <li><b>Picking edits from descriptions falls short.</b> SAE features whose labels mention the behavior (−12%) do no better than random features. A J-lens direction built from the behavior's keywords (−33%) beats all 5 random-word directions at the lowest damage of any edit (.0003 nats per token) but stays under the 50% bar and leaves denying AI unchanged. Across all three evals the descriptive readouts (O-lens, J-lens, SAE labels, NLA) also added nothing to a judge reading the transcript.</li>
           <li><b>The Assistant Axis cap has a small effect.</b> The cap beats 10 role caps of equal damage on the four replies per prompt used for the control comparison (54% beyond) but not on the other four replies (34%); even an over-limit cap at .043 nats per token removes only 51%. The identity behaviors are not mainly a persona slip along that axis.</li>
           <li><b>No intervention at its chosen dose measurably damages the model.</b> MMLU .83–.85, GSM8K .91–.93, 160 of 160 identity answers still say AI, generation 440–495 tokens per second against 515 clean.</li>
         </ul>
         <h3>Implications for the methods</h3>
         <ul>
-          <li><b>Interventions chosen by causal contrast work; interventions chosen from descriptions do not.</b> The two winners were picked by attributing the behavior to neurons or by contrasting the states of weird and normal replies. The three losers were picked by reading a label (SAE), a neuron readout (O-lens) or a token list (J-lens).</li>
+          <li><b>Interventions chosen by causal contrast work; interventions chosen from descriptions do not.</b> The two winners were picked by attributing the behavior to neurons or by contrasting the states of weird and normal replies. The three edits under the bar were picked by reading a label (SAE), a neuron readout (O-lens) or a token list (J-lens); of these only the J-lens direction beat its random controls.</li>
           <li><b>How to improve the readouts:</b> validate a label by whether it predicts what removing the component does, and train explainers on that objective; fit dictionaries and readouts on chat states, not web text (the SAE and NLA reconstruct our states 10–25 points worse than their training data); score a readout by what it adds to the transcript, since the transcript is the cheapest monitor and so far the best one.</li>
           <li><b>How to use attribution:</b> treat the ranking as a pool, not an ordering, and reach for a difference-of-means direction first; it is cheaper, broader, and its 100-neuron equivalent is a check on specificity.</li>
           <li><b>Caveats.</b> Random directions at the weird direction's norm barely damage the model (.0005 vs .0118), so its controls are norm-matched, not damage-matched; damage alone does not produce the drop (an over-limit axis cap at .043 removes 51%, the top-1000 set at .021 removes 93%). Held-out clean rates are .16 under the discovery rates, so power is lower than planned. Five behaviors; the axis cap's setting moved from the 50th to the 25th percentile under the pre-registered damage rule.</li>
@@ -621,6 +622,65 @@ table.ct.ct-sm tr.ref td { background: var(--tint) }
         <li><b>Caveats.</b> The neuron test covers the 102 prompts of behaviors with a set of their own, and the claiming-a-body set fails its validity check (a random set varies more across prompts). The sentence attribution needed 256 to 2,048 integrated-gradient steps before it summed to the set's change. Laser is thin because Opus refused 9 to 27 laser claims per run. Confidence intervals are a paired bootstrap over prompt patterns; the three methods share one Holm correction.</li>
       </ul>
       <p class="src">Scale: 93,728 judged replies on 8 spot H100s, 920 claims on 115 prompts (35% TRUE), 12,176 Opus 5.5 calls over 12 runs. Full write-up in findings/chive/report.md; every design choice and the freeze log in findings/chive/design.md.</p>
+    </div>
+    <div class="figs sub" data-sub="each" hidden>
+      <p class="s">One figure per method, each showing the result specific to that method. Shared setup: eval C edits are scored on the 48 held-out prompts of the four behaviors with enough prompts (rate of weird replies judged by Gemma 4 31B, clean rate 29%); eval A monitors are scored at 500 cut points where resampled continuations of the same prefix split between weird and normal, reading the state 4 tokens into each continuation. Details of every method are in the Methods &amp; setup tab.</p>
+
+      <p class="fig-group">Neurons chosen by attribution</p>
+      <figure class="fig">
+        <h3>Attribution finds the 1,000 neurons that hold the behavior; its ranking inside them adds little</h3>
+        <img class="plate" src="figs/fig_m_neurons.svg" alt="Share of the behavior removed against damage for ranked and random neuron sets" loading="lazy">
+        <figcaption><b>Figure M1.</b> Any 100 neurons drawn at random from the attribution's top 1,000 remove 46 to 62% of the behavior, close to the ranked top 100 (68%) at about a quarter of its damage (.0013 against .0047 nats per token). Each point is one edit that zeroes a neuron set: share of the clean behavior rate removed (y) against damage, the added next-token loss on benign chat and capability text (x, log scale). Filled red: the attribution's top 10, top 100 and top 1,000 neurons. Hollow red: 10 random draws of 100 from the top 1,000. Grey: 20 random sets of 100 neurons from outside the top 1,000, matched by layer, which remove −19 to +10%. Dashed line: the .02 damage limit of eval C; the top 1,000 (93%) sits just past it.</figcaption>
+      </figure>
+
+      <p class="fig-group">Weird-vs-normal direction</p>
+      <figure class="fig">
+        <h3>A direction fit on four behaviors reads most of the six it never saw nearly as well as their own directions</h3>
+        <img class="plate" src="figs/fig_m_direction.svg" alt="AUROC of a direction fit on four behaviors against each behavior's own direction" loading="lazy">
+        <figcaption><b>Figure M2.</b> Unlike the neuron sets, which each work on one behavior, one direction, the unit mean of the four eval C behaviors' directions, separates weird from normal replies of behaviors it never saw: called 911 .89 (own direction .94), sexual advances .96 (.99), calorie restriction .78 (.92), drunk driving .72 (.86), cutting .68 (.75); chemtrails is the exception (.57 against .88). Each point is a behavior. x: within-prompt AUROC of the behavior's own direction (the share of weird and normal reply pairs to the same prompt in which the weird reply projects further; 0.5 is chance). y: the same AUROC for the unit mean of the denying-AI, fake-code-execution, claiming-a-body and laser directions. Filled: the four behaviors the direction was fit on (cross-validated over prompts); hollow: never seen. Points on the dashed line lose nothing. Block 48, mean state over the reply's tokens. Sexual advances and calorie restriction rest on 7 and 8 prompts; purging (9 prompts) has too few pairs for a cross-validated own direction.</figcaption>
+      </figure>
+
+      <p class="fig-group">Residual-stream probe</p>
+      <figure class="fig">
+        <h3>At every depth, a probe trained to predict the outcome from the model's state scores below a judge reading the transcript</h3>
+        <img class="plate" src="figs/fig_m_probe.svg" alt="Probe AUROC by block against the text judge" loading="lazy">
+        <figcaption><b>Figure M3.</b> No block of the residual stream tells which continuation will turn weird better than the words written so far: at the 34 sharp forks, where the weird and normal continuations diverge at once, the probe reaches .58 to .73 against the text judge's .85 (paired difference p ≤ .006 at every block); at the other 466 cut points it scores .51 to .53 against .54. The probe is a ridge regression from the full residual state at one block (5,120 numbers) to the measured chance of weird, trained on 10,371 cut points with 5-fold cross-validation over prompt patterns. y: within-cut AUROC for the weird against the normal continuation, 4 tokens in. Green: the probe at each block, with 95% bootstrap bands over cuts. Dashed black: the text judge (Claude Haiku reading the transcript), with its 95% band in grey.</figcaption>
+      </figure>
+
+      <p class="fig-group">Assistant Axis</p>
+      <figure class="fig">
+        <h3>Capping the Assistant Axis removes denying being an AI, which the neuron set cannot; the neuron set removes the other three behaviors better</h3>
+        <img class="plate" src="figs/fig_m_axis.svg" alt="Behavior rate per behavior under the neuron set and the Assistant Axis cap" loading="lazy">
+        <figcaption><b>Figure M4.</b> The axis cap acts on the identity component of the behaviors and the neuron sets act on the tokens that write them. Denying being an AI: 31% with no edit, 19% with the axis capped, 41% with its top-100 neurons zeroed. Fake code execution and laser at aircraft: the neuron set reaches 0% and 6%, the cap 14% and 31%. Points: behavior rate with the edit, with 95% bootstrap intervals over prompt patterns (4 replies per prompt). Red circles: the behavior's top-100 attributed neurons zeroed. Pink squares: the projection on the Assistant Axis held at or above its 25th percentile on benign chat, blocks 40 to 59. Grey bars: the range of the method's matched random edits (20 random neuron sets of the same size and layers; 10 caps on other role directions at equal damage); hollow grey circles in the bottom group show each random edit pooled over the four behaviors. Dashed: the rate with no edit.</figcaption>
+      </figure>
+
+      <p class="fig-group">O-lens (oracle lens)</p>
+      <figure class="fig">
+        <h3>Before a fork, the O-lens rises just as much when the same words are read as a plain document</h3>
+        <img class="plate" src="figs/fig_m_olens.svg" alt="Fork-aligned O-lens score in the chat and as a plain document" loading="lazy">
+        <figcaption><b>Figure M5.</b> The O-lens anticipates the behavior from the text it is reading; it does not read a decision specific to the chat. The 46 sharp forks are aligned at the fork token (0 is the state that chooses it). Top: the chance of weird measured by resampling 24 continuations on each side of the fork (orange; 19% before, 81% after) and Claude Haiku's estimate from the transcript up to each token (black). Bottom: O-lens behavior score (0 to 10, block 56) for the reply read inside the chat (solid) and for the same words with no chat template (dashed). Both rise from about 2 to about 5 over the 20 tokens before the fork. Bands are 95% intervals over forks.</figcaption>
+      </figure>
+
+      <p class="fig-group">NLA (natural language autoencoder)</p>
+      <figure class="fig">
+        <h3>The NLA reconstructs our chat states far worse than its web-text training data, and describes the neurons behind fake code execution as web-page genres</h3>
+        <img class="plate" src="figs/fig_m_nla.svg" alt="NLA reconstruction on web text and chat, and its descriptions of the top fake-code-execution neurons" loading="lazy">
+        <figcaption><b>Figure M6.</b> The NLA describes every state as a kind of web page, because web pages are what it was trained on. <b>(a)</b> Share of the residual state's variance recovered when the NLA's explanation is mapped back to a vector by its reconstructor: 64 to 78% on web text (black), 39 to 46% on states from our chat replies (blue, 95% intervals over 200 states). <b>(b)</b> The first phrase of the NLA's explanation of the output direction of each of the ten neurons whose attribution to fake code execution is highest; none mentions code or execution. Over all five behaviors' 1,000 attributed neurons, Claude Haiku scored 0 to 8 per 1,000 descriptions at 25 or more out of 100 for the behavior, and none above 50.</figcaption>
+      </figure>
+
+      <p class="fig-group">J-lens (Jacobian lens)</p>
+      <figure class="fig">
+        <h3>Capping the behavior's keywords in J-lens space beats every random-word direction at the lowest damage of any edit, but removes only a third of the behavior</h3>
+        <img class="plate" src="figs/fig_m_jlens.svg" alt="Behavior rate per behavior under the J-lens keyword direction cap" loading="lazy">
+        <figcaption><b>Figure M7.</b> The J-lens keyword direction takes the rate from 29% to 19%, 41% of the clean rate beyond the worst of 5 random-word directions (p .009 after Holm correction), at .0003 nats per token, a fifteenth of the neuron set's damage; it leaves denying being an AI at its clean rate. The edit maps the behavior's keyword tokens (for fake code execution: " ran", " executed", " output", " tested", " results") back to block 44 through the transpose of the J-lens, averages them into one unit direction, and holds the state's projection on it at or below its 25th percentile on benign chat. Points: behavior rate with the edit, with 95% bootstrap intervals over prompt patterns. Grey bars: range of 5 directions built the same way from random tokens of matched frequency; hollow grey circles in the bottom group show each one pooled. Dashed: the rate with no edit.</figcaption>
+      </figure>
+
+      <p class="fig-group">SAE (sparse autoencoder)</p>
+      <figure class="fig">
+        <h3>The signal at block 42 survives in the part of the state the SAE fails to reconstruct and is lost from its reconstruction</h3>
+        <img class="plate" src="figs/fig_m_sae.svg" alt="AUROC of probes on the raw state, SAE error, SAE reconstruction and SAE features" loading="lazy">
+        <figcaption><b>Figure M8.</b> At the 34 sharp forks a probe on the raw block-42 state reaches AUROC .72 and a probe on the SAE's error (the state minus its reconstruction) .71, while a probe on the SAE's reconstruction reaches .56 (raw minus reconstruction +.16, p .01, paired over forks); sparse probes on 16 or 256 SAE features reach .56 and .62. The SAE was trained on web text and recovers 59% of the variance of our chat states against 70% on web text, so the part it drops carries the behavior. Each row is a ridge probe on one input at the last token, trained to predict the measured chance of weird with 5-fold cross-validation over prompt patterns; the sparse probes use only the 16 or 256 SAE features most correlated with that chance inside the training folds. x: within-cut AUROC for the weird against the normal continuation, 4 tokens in. Filled: the 34 sharp forks; hollow: the other 466 cut points; bars are 95% bootstrap intervals over cuts. Dashed: the text judge on each set.</figcaption>
+      </figure>
     </div>
     <div class="sub" data-sub="why" hidden>
       <div class="fig fig-notes">

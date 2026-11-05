@@ -9,8 +9,10 @@ findings/evalc (eval C). Literature notes with URLs: this file's section 8. The 
    oracle lens (O-lens), the Jacobian lens family (J-lens, J++, R-lens, template lens), and sparse-autoencoder (SAE)
    feature labels. On WeirdChat they failed all three of our tests. As monitors they tied a judge reading the
    transcript (AUROC .54 to .56 against .56). As explanations they did not help a reader predict which prompt edits
-   matter (within .005 of their own controls). As a way to choose an intervention they did no better than a random
-   edit of the same size (SAE labels 12% drop, J-lens keywords 33%, O-lens-filtered neurons 9% beyond controls).
+   matter (within .005 of their own controls). As a way to choose an intervention, none reached the bar of removing half the clean rate beyond its random
+   controls: SAE labels removed 12% (no better than random features), O-lens-filtered neurons 9% beyond random draws
+   from the same pool, and a J-lens keyword direction 33%, 41% of the clean rate beyond all 5 random-word directions
+   (p .009 after Holm correction) at very low damage (.0003 nats per token).
 2. The papers that introduced these methods never ran this comparison. Every headline result scores a reader on
    naming something engineered to be absent from the text: an unspoken intermediate step, a planned rhyme, a secret
    word, an implanted quirk. The pass rule is usually "any layer, any position", the comparison is lens against lens,
@@ -53,8 +55,9 @@ Three tests, one model (Qwen3.6-27B), one judge (Gemma 4 31B with WeirdChat's ru
 3. **Eval C, control.** Each method's best intervention under a damage limit of .02 nats per token, on 48 held-out
    prompts. Interventions chosen causally remove about two thirds of the behavior (zeroing the attributed top-100
    neurons 68%, a ceiling on the weird-vs-normal direction 65%; 86% and 79% of the clean rate beyond matched random
-   edits). Interventions chosen from descriptions do not: SAE features whose labels mention the behavior remove 12%,
-   a J-lens keyword direction 33%, and the 100 neurons of the top-1,000 that the O-lens reads as the behavior remove
+   edits). Interventions chosen from descriptions fall short: SAE features whose labels mention the behavior remove 12%,
+   no more than random features; a J-lens keyword direction removes 33%, beyond all 5 random-word directions but under
+   the bar; and the 100 neurons of the top-1,000 that the O-lens reads as the behavior remove
    59%, but random 100s from the same top-1,000 remove 46 to 62%, so the readout adds 9%. (findings/evalc)
 
 ## 2. How the method papers evaluated themselves

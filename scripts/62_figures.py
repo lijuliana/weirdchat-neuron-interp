@@ -524,7 +524,288 @@ def fig_chive():
     build("fig_chive", "\n".join(L))
 
 
+# ============================================================================================ one figure per method
+SHARP = None
+
+
+def sharp_ci():
+    global SHARP
+    if SHARP is None:
+        SHARP = json.load(open(os.path.join(REPO, "runs/monitors/eval/sharp_ci.json")))
+    return SHARP
+
+
+def by_beh():
+    import csv
+    return {(r["arm"], r["behavior"]): r for r in csv.DictReader(open(os.path.join(REPO, "findings/evalc/by_behavior.csv")))}
+
+
+def fig_m_neurons():
+    """Attribution: the top 1,000 hold the behavior; the ranking inside them adds little."""
+    F = json.load(open(os.path.join(REPO, "findings/evalc/frontier.json")))["points"]
+    out = [q for q in F if q["arm"] == "C1a" and q["kind"] == "control"]
+    pool = [q for q in F if q["arm"] == "C7" and q["kind"] == "control"]
+    rung = sorted([q for q in F if q["arm"] == "C1a" and q["kind"] in ("rung", "gate")], key=lambda q: q["damage"])
+    P = lambda qs: " ".join(f"({q['damage']:.6f},{f(100*q['drop'],2)})" for q in qs)
+    R = json.load(open(os.path.join(REPO, "runs/evalc/judge/eval/random_pool.json")))
+    L = [r"\begin{tikzpicture}",
+         r"\begin{axis}[width=10.5cm, height=7cm, xmode=log, xmin=1e-4, xmax=0.05, xtick={1e-4,1e-3,1e-2},"
+         r" xticklabels={$10^{-4}$,$10^{-3}$,$10^{-2}$}, ymin=-25, ymax=105, ytick={0,25,50,75,100}, yticklabel={$\pgfmathprintnumber{\tick}\%$},"
+         r" axis x line*=bottom, axis y line*=left, ymajorgrids,"
+         r" xlabel={Damage: added next-token loss on benign text (nats/token, log scale)}, ylabel={Share of the behavior removed}]",
+         r"\draw[black!30, line width=0.5pt] (axis cs:1e-4,0) -- (axis cs:0.05,0);",
+         r"\draw[black!45, dashed, line width=0.7pt] (axis cs:0.02,-25) -- (axis cs:0.02,105) node[anchor=south, font=\scriptsize, black!65] {damage limit};",
+         rf"\addplot[only marks, mark=o, mark size=1.7pt, ctrl, line width=0.6pt] coordinates {{{P(out)}}};",
+         rf"\addplot[only marks, mark=o, mark size=2.1pt, neur, line width=0.9pt] coordinates {{{P(pool)}}};",
+         rf"\addplot[neur, line width=1.3pt, mark=*, mark size=2.6pt] coordinates {{{P(rung)}}};"]
+    names = {"C1a_top10": ("top 10", "north"), "C1a_top100": ("top 100", "south east"), "C1a_top1000": ("top 1,000", "east")}
+    for q in rung:
+        lab, anc = names[q["cond"]]
+        L.append(rf"\node[font=\footnotesize\bfseries, neur, anchor={anc}] at (axis cs:{q['damage']:.6f},{f(100*q['drop'],2)}) {{\,{lab}\,}};")
+    L += [rf"\node[font=\footnotesize, neur, anchor=north, align=center] at (axis cs:1.05e-3,{f(100*min(q['drop'] for q in pool)-3,2)})"
+          r" {10 random draws of 100\\from the top 1,000};",
+          r"\node[font=\footnotesize, ctrl, anchor=west, align=left] at (axis cs:1.5e-3,-10) {20 random sets of 100 from outside\\the top 1,000, same layers};",
+          r"\end{axis}", r"\end{tikzpicture}"]
+    build("fig_m_neurons", "\n".join(L))
+
+
+def fig_m_direction():
+    """Weird-vs-normal direction: a direction fit on four behaviors reads behaviors it never saw."""
+    D = C["dirs11"]; J = D["joint"]; seen = set(J["four_behaviors"])
+    B = [b for b in D["behaviors"] if D["own"][b]["cv"] is not None]
+    anc = {"claims-called-911": "east", "denying-ai-identity": "east", "unsolicited-sexual-advances": "east",
+           "extreme-calorie-restriction": "west", "recommends-drunk-driving": "west", "chemtrails-assertion": "east",
+           "false-physical-embodiment": "north west", "cutting-instructions": "north", "fabricated-code-execution": "north east",
+           "laser-at-aircraft": "south east"}
+    L = [r"\begin{tikzpicture}",
+         r"\begin{axis}[width=8.2cm, height=8.2cm, xmin=0.5, xmax=1.0, ymin=0.5, ymax=1.0, xtick={0.5,0.6,0.7,0.8,0.9,1.0}, ytick={0.5,0.6,0.7,0.8,0.9,1.0},"
+         r" xticklabel style={/pgf/number format/.cd, fixed, precision=1}, yticklabel style={/pgf/number format/.cd, fixed, precision=1},"
+         r" axis x line*=bottom, axis y line*=left, grid=major,"
+         r" xlabel={AUROC of the behavior's own direction}, ylabel={AUROC of one direction fit on four behaviors}]",
+         r"\draw[black!40, dashed, line width=0.7pt] (axis cs:0.5,0.5) -- (axis cs:1,1) node[pos=0.2, anchor=south, font=\scriptsize, black!60, rotate=45] {same as own direction};"]
+    for b in B:
+        x, y = D["own"][b]["cv"], J["four_cv"][b]
+        mk = "mark=*, dirc" if b in seen else "mark=o, dirc, line width=0.9pt, fill=white"
+        L.append(rf"\addplot[only marks, {mk}, mark size=2.6pt] coordinates {{({f(x,3)},{f(y,3)})}};")
+        L.append(rf"\node[font=\scriptsize, anchor={anc.get(b,'west')}, {'dirc' if b in seen else 'ink'}] at (axis cs:{f(x,3)},{f(y,3)}) {{\,{SHORTB[b]}\,}};")
+    L += [r"\addlegendimage{only marks, mark=*, dirc, mark size=2.6pt}\addlegendentry{fit on this behavior}",
+          r"\addlegendimage{only marks, mark=o, dirc, line width=0.9pt, mark size=2.6pt}\addlegendentry{never seen}",
+          r"\legend{}",
+          r"\node[anchor=north west, font=\footnotesize, align=left] at (axis cs:0.515,0.985) {\tikz\fill[dirc] (0,0) circle (2.6pt); fit on this behavior (4)\\[2pt]"
+          r"\tikz\draw[dirc, line width=0.9pt] (0,0) circle (2.6pt); never seen by the fit (6)};",
+          r"\end{axis}", r"\end{tikzpicture}"]
+    build("fig_m_direction", "\n".join(L))
+
+
+def fig_m_probe():
+    """Residual probe: at no depth does a probe trained on the outcome beat the transcript judge."""
+    S = sharp_ci(); Ls = [16, 24, 32, 40, 42, 44, 48, 56]
+    def band(key, colr, dash=""):
+        v = [S[f"m3:pooled_L{l}"][key] for l in Ls]
+        up = " ".join(f"({l},{f(x[2],3)})" for l, x in zip(Ls, v)); dn = " ".join(f"({l},{f(x[1],3)})" for l, x in zip(Ls, v))
+        mid = " ".join(f"({l},{f(x[0],3)})" for l, x in zip(Ls, v))
+        return (rf"\addplot[name path=u{key}, draw=none] coordinates {{{up}}};\addplot[name path=d{key}, draw=none] coordinates {{{dn}}};"
+                rf"\addplot[{colr}, fill opacity=0.15] fill between[of=u{key} and d{key}];"
+                rf"\addplot[{colr}, line width=1.3pt, mark=*, mark size=1.6pt{', ' + dash if dash else ''}] coordinates {{{mid}}};"), v[-1][0]
+    t = S["text_b:text"]
+    L = [r"\begin{tikzpicture}",
+         r"\begin{axis}[width=9.5cm, height=6.8cm, xmin=14, xmax=58, xtick={16,24,32,40,48,56}, ymin=0.45, ymax=0.95, ytick={0.5,0.6,0.7,0.8,0.9},"
+         r" yticklabel style={/pgf/number format/.cd, fixed, precision=1}, axis x line*=bottom, axis y line*=left, ymajorgrids,"
+         r" xlabel={Block of the residual stream the probe reads}, ylabel={AUROC, weird vs.\ normal continuation}]",
+         r"\draw[black!30, line width=0.5pt] (axis cs:14,0.5) -- (axis cs:58,0.5);"]
+    for key, y0 in (("sharp", t["sharp"]), ("other", t["other"])):
+        L.append(rf"\fill[black!8] (axis cs:14,{f(y0[1],3)}) rectangle (axis cs:58,{f(y0[2],3)});")
+        L.append(rf"\draw[black, dashed, line width=0.9pt] (axis cs:14,{f(y0[0],3)}) -- (axis cs:58,{f(y0[0],3)});")
+    b1, e1 = band("sharp", "dirc"); b2, e2 = band("other", "dirc!55", "densely dashed")
+    L += [b1, b2,
+          rf"\node[font=\footnotesize, anchor=west, align=left] at (axis cs:58.5,{f(t['sharp'][0],3)}) {{text judge,\\34 sharp forks}};",
+          rf"\node[font=\footnotesize, anchor=west, align=left, dirc] at (axis cs:58.5,{f(e1,3)}) {{probe,\\34 sharp forks}};",
+          rf"\node[font=\footnotesize, anchor=west, align=left] at (axis cs:58.5,{f(t['other'][0]+0.03,3)}) {{text judge, other\\466 cut points}};",
+          rf"\node[font=\footnotesize, anchor=west, align=left, dirc!70!black] at (axis cs:58.5,{f(e2-0.03,3)}) {{probe, other\\466 cut points}};",
+          r"\end{axis}", r"\end{tikzpicture}"]
+    build("fig_m_probe", "\n".join(L))
+
+
+def rate_rows(groups, fname, width=10.5, xmax=50, note=None):
+    """groups: [(header, clean, [(row label, color, mark, rate, lo, hi, ctrl_list or (min,max))])]. Behavior rate dot plot with controls."""
+    rows, data = [], {}
+    for g, clean, rr in groups:
+        rows.append(("h", g))
+        for i, r in enumerate(rr):
+            key = f"{g}|{i}"; rows.append(("r", r[0], key)); data[key] = r + (clean,)
+    ys, ticks, labels, ymin = rows_plot(rows)
+    H = 0.5 * (len(ticks) + 2.5)
+    L = [r"\begin{tikzpicture}",
+         rf"\begin{{axis}}[width={width}cm, height={H:.2f}cm, ymin={ymin+0.4:.2f}, ymax=0.6, ytick={{{','.join(f(t,2) for t in ticks)}}},"
+         rf" yticklabels={{{','.join('{' + l + '}' for l in labels)}}}, y tick label style={{font=\footnotesize}}, major y tick style={{draw=none}},"
+         rf" axis y line*=left, axis x line*=bottom, xmajorgrids, xmin=0, xmax={xmax}, xticklabel={{$\pgfmathprintnumber{{\tick}}\%$}},"
+         r" xlabel={Behavior rate with the edit}]"]
+    # clean rate per group: a short dashed segment spanning the group's rows
+    cur = None
+    for g, clean, rr in groups:
+        yy = [ys[f"{g}|{i}"] for i in range(len(rr))]
+        top, bot = max(yy) + 1.0, min(yy) - 0.4
+        L.append(rf"\draw[black!55, dashed, line width=0.8pt] (axis cs:{f(100*clean,2)},{f(bot,2)}) -- (axis cs:{f(100*clean,2)},{f(top-0.25,2)});")
+        L.append(rf"\node[font=\scriptsize, black!60, anchor=west, inner sep=2pt] at (axis cs:{f(100*clean,2)},{f(top-0.1,2)}) {{no edit}};")
+    for key, y in ys.items():
+        lab, col, mk, m, lo, hi, ctrl, clean = data[key]
+        if isinstance(ctrl, tuple):
+            L.append(rf"\draw[ctrl!60, line width=3.2pt] (axis cs:{f(100*ctrl[0],2)},{f(y,2)}) -- (axis cs:{f(100*ctrl[1],2)},{f(y,2)});")
+        elif ctrl:
+            L.append(rf"\addplot[only marks, mark=o, mark size=1.5pt, ctrl] coordinates {{{' '.join(f'({f(100*c,2)},{f(y,2)})' for c in ctrl)}}};")
+        L.append(rf"\addplot[only marks, mark={mk}, mark size=2.4pt, {col}, ci] coordinates {{({f(100*m,2)},{f(y,2)}) += ({f(100*(hi-m),2)},0) -= ({f(100*(m-lo),2)},0)}};")
+    L.append(rf"\node[font=\scriptsize, anchor=south east, align=right, inner sep=1pt] at (axis cs:{xmax},0.75) "
+             r"{\tikz\draw[ctrl!60, line width=3.2pt] (0,0) -- (0.4,0); range of matched random edits\quad"
+             r" \tikz\draw[ctrl] (0,0) circle (1.5pt); one random edit\quad \tikz\draw[black!55, dashed, line width=0.8pt] (0,-0.1) -- (0,0.15); rate with no edit};")
+    if note:
+        L.append(note)
+    L += [r"\end{axis}", r"\end{tikzpicture}"]
+    build(fname, "\n".join(L))
+
+
+BEH4 = [("denying-ai-identity", "Denying being an AI"), ("false-physical-embodiment", "Claiming a body"),
+        ("fabricated-code-execution", "Fake code execution"), ("laser-at-aircraft", "Laser at aircraft")]
+
+
+def fig_m_axis():
+    """Assistant Axis cap vs the neuron set, per behavior: the cap removes denying AI, the set the rest."""
+    BB = by_beh(); E = evalc_data()
+    groups = []
+    for b, name in BEH4:
+        n = BB[("C1a", b)]["n_prompts"]
+        rr = []
+        for arm, lab, col, mk in (("C1a", "top-100 neurons zeroed", "neur", "*"), ("C2", "Assistant Axis capped", "pers", "square*")):
+            r = BB[(arm, b)]
+            rr.append((lab, col, mk, float(r["arm4"]), float(r["arm4_lo"]), float(r["arm4_hi"]), (float(r["ctrl_min"]), float(r["ctrl_max"]))))
+        groups.append((f"{name} ({n} prompts)", float(BB[("C1a", b)]["clean"]), rr))
+    rr = [(lab, col, mk, E[a]["arm4"], E[a]["lo"], E[a]["hi"], E[a]["ctrl"]) for a, lab, col, mk in
+          (("C1a", "top-100 neurons zeroed", "neur", "*"), ("C2", "Assistant Axis capped", "pers", "square*"))]
+    groups.append(("All four (48 prompts)", E["C1a"]["clean"], rr))
+    rate_rows(groups, "fig_m_axis", xmax=80)
+
+
+def fig_m_jlens():
+    """J-lens keyword direction: beats every random-word direction at a tiny damage, but removes a third."""
+    BB = by_beh(); E = evalc_data()
+    groups = []
+    for b, name in BEH4:
+        r = BB[("C6", b)]
+        groups.append((f"{name} ({r['n_prompts']} prompts)", float(r["clean"]),
+                       [("keyword direction capped", "read", "diamond*", float(r["arm4"]), float(r["arm4_lo"]), float(r["arm4_hi"]),
+                         (float(r["ctrl_min"]), float(r["ctrl_max"])))]))
+    groups.append(("All four (48 prompts)", E["C6"]["clean"],
+                   [("keyword direction capped", "read", "diamond*", E["C6"]["arm4"], E["C6"]["lo"], E["C6"]["hi"], E["C6"]["ctrl"])]))
+    rate_rows(groups, "fig_m_jlens", width=9.5, xmax=60)
+
+
+def fig_m_olens():
+    """O-lens: rises before the fork just as much when the words are read as a plain document."""
+    F = C["fork"]; rel = F["rel"]
+    def band(vals, colr, dash="", nm="x"):
+        pts = [(r, v) for r, v in zip(rel, vals) if v and -20 <= r <= 10]
+        up = " ".join(f"({r},{f(v[2],3)})" for r, v in pts); dn = " ".join(f"({r},{f(v[1],3)})" for r, v in pts)
+        mid = " ".join(f"({r},{f(v[0],3)})" for r, v in pts)
+        return (rf"\addplot[name path=u{nm}, draw=none] coordinates {{{up}}};\addplot[name path=d{nm}, draw=none] coordinates {{{dn}}};"
+                rf"\addplot[{colr}, fill opacity=0.15] fill between[of=u{nm} and d{nm}];"
+                rf"\addplot[{colr}, line width=1.3pt{', ' + dash if dash else ''}] coordinates {{{mid}}};"), pts
+    b, a = F["P"]["before"], F["P"]["after"]
+    tb, tp = band(F["text"], "black", "dashed", "t")
+    lb, lp = band(F["lens"], "read", "", "l"); rb, rp = band(F["raw"], "read!50", "densely dashed", "r")
+    L = [r"\begin{tikzpicture}",
+         r"\begin{groupplot}[group style={group size=1 by 2, vertical sep=0.5cm, x descriptions at=edge bottom},"
+         r" width=10cm, xmin=-20, xmax=10, xtick={-20,-15,-10,-5,0,5,10}, axis x line*=bottom, axis y line*=left, ymajorgrids]",
+         r"\nextgroupplot[height=4.2cm, ymin=0, ymax=1, ytick={0,0.5,1}, yticklabels={0\%,50\%,100\%}, ylabel={Chance of weird}]",
+         rf"\addplot[meas, line width=1.6pt, const plot] coordinates {{(-20,{f(b[0],3)}) (0,{f(a[0],3)}) (10,{f(a[0],3)})}};",
+         tb,
+         r"\draw[black!50, dotted, line width=0.8pt] (axis cs:0,0) -- (axis cs:0,1);",
+         rf"\node[font=\footnotesize, anchor=west] at (axis cs:10.3,{f(tp[-1][1][0],3)}) {{text judge}};",
+         rf"\node[font=\footnotesize, meas!80!black, anchor=west] at (axis cs:10.3,{f(a[0]+0.08,3)}) {{measured}};",
+         r"\nextgroupplot[height=4.8cm, ymin=0, ymax=8, ytick={0,2,4,6,8}, ylabel={O-lens behavior score},"
+         r" xlabel={Tokens relative to the fork token (0 = the state that chooses it)}]",
+         lb, rb,
+         r"\draw[black!50, dotted, line width=0.8pt] (axis cs:0,0) -- (axis cs:0,8);",
+         rf"\node[font=\footnotesize, read, anchor=west, align=left] at (axis cs:10.3,6.9) {{reply read\\in the chat}};",
+         rf"\node[font=\footnotesize, read!60, anchor=west, align=left] at (axis cs:10.3,4.4) {{same words as\\a plain document}};",
+         r"\end{groupplot}", r"\end{tikzpicture}"]
+    build("fig_m_olens", "\n".join(L))
+
+
+def fig_m_nla():
+    """NLA: reconstructs chat states far worse than web text, and reads causal neurons as web-text genres."""
+    import ast
+    W = json.load(open(os.path.join(REPO, "runs/monitors/nla/val/fve_web.json")))
+    V = json.load(open(os.path.join(REPO, "runs/monitors/nla/val/fve.json")))
+    sets = json.load(open(os.path.join(REPO, "runs/evalc/prep/sets.json")))["C1a"]["fabricated-code-execution"]["sets"]["top10"]
+    keys = [f"N|{l}|{n}|+1" for l, ns in sets.items() for n in ns]
+    reads = {}
+    for line in open(os.path.join(REPO, "runs/evalc/nla_c8/neurons_nla.jsonl")):
+        r = json.loads(line)
+        if r["key"] in keys:
+            tx = ast.literal_eval(r["texts"]) if isinstance(r["texts"], str) else r["texts"]
+            reads[r["key"]] = tx[0].split("\n")[0]
+    def short(s, n=56):
+        s = s.replace("Genre: ", "").split(";")[0].split(":")[0].split(",")[0].strip()
+        s = s.split(" with ")[0].split(" — ")[0].split(" (")[0]
+        if len(s) > n:
+            s = s[:n].rsplit(" ", 1)[0] + "\u2026"
+        s = s[0].upper() + s[1:]
+        return esc(s.replace("#", "\\#").replace("$", "\\$")).replace("\u2026", r"\ldots")
+    items = sorted(((int(k.split("|")[1]), short(v)) for k, v in reads.items()))
+    Ls = [32, 44, 56]
+    web = [W[f"web_L{l}_sample"]["FVE"] for l in Ls]; chat = [V[f"L{l}_sample"] for l in Ls]
+    L = [r"\begin{tikzpicture}",
+         r"\begin{axis}[name=a, width=5.6cm, height=6.6cm, xmin=-0.5, xmax=2.5, xtick={0,1,2}, xticklabels={32,44,56}, ymin=0, ymax=100,"
+         r" ytick={0,25,50,75,100}, yticklabel={$\pgfmathprintnumber{\tick}\%$}, axis x line*=bottom, axis y line*=left, ymajorgrids,"
+         r" xlabel={Block}, ylabel={Variance of the state reconstructed}, title={(a)}, title style={at={(-0.3,1.02)}, anchor=south west}]"]
+    for i, (w, c) in enumerate(zip(web, chat)):
+        L.append(rf"\draw[black!35, line width=1pt] (axis cs:{i},{f(100*w,2)}) -- (axis cs:{i},{f(100*c['FVE'],2)});")
+    L.append(rf"\addplot[only marks, mark=*, mark size=2.6pt, black] coordinates {{{' '.join(f'({i},{f(100*w,2)})' for i, w in enumerate(web))}}};")
+    cp = " ".join(f"({i},{f(100*c['FVE'],2)}) += (0,{f(100*(c['FVE_CI95'][1]-c['FVE']),2)}) -= (0,{f(100*(c['FVE']-c['FVE_CI95'][0]),2)})"
+                  for i, c in enumerate(chat))
+    L.append(rf"\addplot[only marks, mark=*, mark size=2.6pt, read, yci] coordinates {{{cp}}};")
+    L += [rf"\node[font=\footnotesize, anchor=south, align=center] at (axis cs:1,{f(100*web[1]+4,2)}) {{web text\\(its training data)}};",
+          rf"\node[font=\footnotesize, read, anchor=north, align=center] at (axis cs:1,{f(100*chat[1]['FVE']-7,2)}) {{our chat\\replies}};",
+          r"\end{axis}"]
+    lines = r"\\[1pt]".join(rf"{{\color{{black!55}}{l}}} & {t}" for l, t in items)
+    L += [r"\node[anchor=north west, font=\footnotesize, align=left] at ($(a.north east)+(0.8cm,0.45cm)$) {"
+          r"(b)\enspace The NLA's description of the output direction of each\\ of the ten neurons that most drive fake code execution\\[4pt]"
+          r"\begin{tabular}{@{}r@{\enspace}l@{}}{\color{black!55}block} & {\color{black!55}NLA description (first phrase)}\\[2pt]" + lines + r"\end{tabular}};",
+          r"\end{tikzpicture}"]
+    build("fig_m_nla", "\n".join(L))
+
+
+def fig_m_sae():
+    """SAE: the signal at block 42 survives in the SAE's error term and is lost from its reconstruction."""
+    S = sharp_ci()
+    rows = [("r", "Raw block-42 state", "m6a:raw42_ridge"), ("r", "SAE error (state minus reconstruction)", "m6a:err_ridge"),
+            ("r", "SAE reconstruction", "m6a:recon_ridge"), ("r", "Sparse probe, 256 SAE features", "m6a:k256"),
+            ("r", "Sparse probe, 16 SAE features", "m6a:k16")]
+    col = {"m6a:raw42_ridge": "dirc", "m6a:err_ridge": "read", "m6a:recon_ridge": "read", "m6a:k256": "read", "m6a:k16": "read"}
+    ys, ticks, labels, ymin = rows_plot(rows)
+    t = S["text_b:text"]
+    L = [r"\begin{tikzpicture}",
+         rf"\begin{{axis}}[width=9.6cm, height=6.0cm, ymin={ymin+0.4:.2f}, ymax=1.3, ytick={{{','.join(f(v,2) for v in ticks)}}},"
+         rf" yticklabels={{{','.join('{' + l + '}' for l in labels)}}}, y tick label style={{font=\footnotesize}}, major y tick style={{draw=none}},"
+         r" axis y line*=left, axis x line*=bottom, xmajorgrids, xmin=0.4, xmax=0.92, xtick={0.4,0.5,0.6,0.7,0.8,0.9},"
+         r" xticklabel style={/pgf/number format/.cd, fixed, precision=1}, xlabel={AUROC, weird vs.\ normal continuation (ridge probe on each input)}]",
+         rf"\draw[black!30, line width=0.5pt] (axis cs:0.5,{ymin+0.4:.2f}) -- (axis cs:0.5,1.3);"]
+    for key, x, lab, anc in (("sharp", t["sharp"][0], r"text judge,\\sharp forks", "west"), ("other", t["other"][0], r"text judge,\\other cut points", "east")):
+        L.append(rf"\draw[black, dashed, line width=0.8pt] (axis cs:{f(x,3)},{ymin+0.4:.2f}) -- (axis cs:{f(x,3)},1.3);")
+        L.append(rf"\node[font=\scriptsize, anchor=north {anc}, align=left, inner sep=2pt] at (axis cs:{f(x,3)},1.3) {{{lab}}};")
+    for _, lab, k in rows:
+        y = ys[k]
+        for key, mk, dy in (("sharp", "*", 0.13), ("other", "o", -0.13)):
+            m, lo, hi = S[k][key][:3]
+            L.append(rf"\addplot[only marks, mark={mk}, mark size=2.3pt, {col[k]}, line width=0.8pt, {'fill=white, ' if mk == 'o' else ''}ci] coordinates "
+                     rf"{{({f(m,3)},{f(y+dy,2)}) += ({f(hi-m,3)},0) -= ({f(m-lo,3)},0)}};")
+    L += [r"\node[font=\scriptsize, anchor=north west, align=left] at (axis cs:0.6,1.28) {\tikz\fill[read] (0,0) circle (2.3pt); 34 sharp forks\\ \tikz\draw[read, line width=0.8pt] (0,0) circle (2.3pt); 466 other cut points};",
+          r"\end{axis}", r"\end{tikzpicture}"]
+    build("fig_m_sae", "\n".join(L))
+
+
 FIGS = {"fig_evalc": lambda: fig_evalc(evalc_data()), "fig_monitors": fig_monitors, "fig_fork": fig_fork, "fig_dir_own": fig_dir_own,
+        "fig_m_neurons": fig_m_neurons, "fig_m_direction": fig_m_direction, "fig_m_probe": fig_m_probe, "fig_m_axis": fig_m_axis,
+        "fig_m_jlens": fig_m_jlens, "fig_m_olens": fig_m_olens, "fig_m_nla": fig_m_nla, "fig_m_sae": fig_m_sae,
         "fig_dir_transfer": fig_dir_transfer, "fig_dir_prefix": fig_dir_prefix, "fig_axis": fig_axis, "fig_lens": fig_lens_measure_pick,
         "fig_shared": fig_shared, "fig_chive": fig_chive}
 
